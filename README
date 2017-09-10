@@ -1,0 +1,26 @@
+PURPOSE
+
+emeraLD is tool to efficiently query and calculate linkage disequilibrium (LD) in large data sets 
+
+it is ideal for rapid on-the-fly calculations, e.g. in GWAS analysis
+
+--------------------------
+
+supported data formats are currently VCF and M3VCF
+
+see example.sh or run with --help for example usage
+
+please send bug reports or other requests to corbinq@gmail.com
+
+--------------------------
+INSTALLATION
+
+to install with libStatGen already present:
+     cd emeraLD
+     make LIBSTATGEN_PATH=my/path/to/libStatGen
+
+to install without libStatGen:
+     cd emeraLD
+     make cloneLib
+     make
+     
