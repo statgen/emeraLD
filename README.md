@@ -45,3 +45,5 @@ ld_data <- getLD(region = "20:83061-92955")
 head(ld_data$Sigma[, 1:10], 10)
 head(ld_data$info)
 ```
+#### Feedback and bug reports
+- Feel free to contact Corbin Quick (corbinq@gmail.com) with bug reports or feedback
