@@ -10,9 +10,10 @@ emeraLD2R <- function(path, bin = "bin/emeraLD"){
 		opts <- paste(c("--matrix", "--stdout")[c(matrix.out, TRUE)], collapse = " ")
 		chr <- strsplit(region, ":")[[1]][1]
 		vcfile <- gsub("\\$chr", chr, path)
+		print(vcfile)
 		if(!file.exists(vcfile)) stop(paste0(vcfile, " does not exist"))
 		out <- suppressMessages(fread(
-			input  = paste(bin, "-i", path, "--region", region, opts), 
+			input  = paste(bin, "-i", vcfile, "--region", region, opts), 
 			header = FALSE, showProgress = FALSE
 		))
 		info <- NULL
@@ -28,15 +29,17 @@ emeraLD2R <- function(path, bin = "bin/emeraLD"){
 	}
 }
 
-vcf_path <- "example/chr$chr.m3vcf.gz"
+## use "$chr" when genotype files are separated by chromosome
+## "$chr" is automatically replaced when a region is specified
+in_path <- "example/chr$chr.1KG.25K_m.vcf.gz"
 
 ## emeraLD2R creates an LD retrieval function 
-emeraLD <- emeraLD2R(path = vcf_path)
+getLD <- emeraLD2R(path = in_path)
 
-## genotypes are read when the LD retrieval function is invoked
+## calling an LD retrieval function invokes emeraLD
 ld_data <- getLD(region = "20:83061-92955")
+## emeraLD processes genotypes; LD output is passed to R
 
-## check output 
+## check LD output 
 head(ld_data$Sigma[, 1:10], 10)
 head(ld_data$info)
-
