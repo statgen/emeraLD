@@ -32,10 +32,10 @@ bin/emeraLD -i example/chr20.1KG.25K_m.m3vcf.gz --region 20:60479-438197 --stdou
 ```R
 ## use "$chr" when genotype files are separated by chromosome
 ## "$chr" is automatically replaced when a region is specified
-in_path <- "example/chr$chr.1KG.25K_m.m3vcf.gz"
+in_path <- "example/chr$chr.1KG.25K_m.vcf.gz"
 
 ## emeraLD2R creates an LD retrieval function 
-emeraLD <- emeraLD2R(path = in_path)
+getLD <- emeraLD2R(path = in_path)
 
 ## calling an LD retrieval function invokes emeraLD
 ld_data <- getLD(region = "20:83061-92955")
