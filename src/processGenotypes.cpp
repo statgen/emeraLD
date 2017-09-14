@@ -2,6 +2,41 @@
 
 using namespace std;
 
+void snpinfo::push(int ch, int po, string rs, string rf, string al)  
+{
+	chr.push_back(ch);
+	pos.push_back(po);
+	rsid.push_back(rs);
+	ref.push_back(rf);
+	alt.push_back(al);
+}
+
+unsigned int snpinfo::size()  {
+	return pos.size();
+}
+
+void gdata::push (vector<int> ca, vector<bool> ge, int di, int ma, int bl) 
+{
+	carriers.push_back(ca);
+	genotypes.push_back(ge);
+	dir.push_back(di);
+	mac.push_back(ma);
+	block.push_back(bl);
+}
+
+void hdata::push_block (vector<int> ii, vector<int> hc, int nh) 
+{
+	iids.push_back(ii);
+	hcts.push_back(hc);
+	nhap.push_back(nh);
+}
+
+void hdata::push_map (vector<int> ma) 
+{
+	map.push_back(ma);
+}
+
+
 vector<int> getRegion (string str){
 	vector<int> v ; 
 	size_t prev_pos = 0, pos;
@@ -23,13 +58,15 @@ string asRegion (int chr, int pos, int end){
 	return out;
 }
 
-int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, string &ref_rsid, int &ref_snp, string &ref_ref,  string &ref_alt, int &j_ref, int &matches, vector<vector<int>> &carriers, vector<vector<bool>> &genotypes, vector<int> &dirs, vector<int> &chrs, vector<int> &poss, vector<string> &rsids, vector<string> &refs, vector<string> &alts, int &k, int &n_haps, vector<int> &BLOCK_ID){
-	
+
+int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, int &n_haps){
 	Tabix tfile(vcf_path);
 	
 	tfile.setRegion(region);
 
 	string line;
+	
+	int k = 0;
 
 	while ( tfile.getNextLine(line) ) {
 
@@ -37,7 +74,8 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_
 			
 			string rsid, ref, alt, qual, filter, info, format;
 			
-			int chr, pos, n, n1, n0;
+			int chr, n, n1, n0;
+			int pos;
 			n = n1 = n0 = 0;
 			vector<int> id_0, id_1;
 			vector<bool> genov;
@@ -49,24 +87,23 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_
 			if( region_mode < 0 || (pos >= r_start && pos <= r_end) ){
 			
 				if( one_vs_all > 0){
-					if( rsid==ref_rsid || pos==ref_snp ){
-						matches++;
-						ref_ref = ref;
-						ref_alt = alt;
-						if(ref_rsid == ""){
-							ref_rsid=rsid;
+					if( rsid == target.rsid || pos == target.pos ){
+						target.matches++;
+						target.ref = ref;
+						target.alt = alt;
+						if(target.rsid == ""){
+							target.rsid = rsid;
 						}
-						if( ref_snp < 0 ){
-							ref_snp = pos;
+						if( target.pos < 0 ){
+							target.pos = pos;
 						}
-						j_ref = k;
-						if( matches > 1 ){
-							cerr << "\nERROR: found duplicate matches for target SNP " << chr << ":" << pos << " (rsid " << rsid <<")\n";
+						target.index = k;
+						if( target.matches > 1 ){
+							cerr << "\nERROR: found duplicate target.matches for target SNP " << chr << ":" << pos << " (rsid " << rsid <<")\n";
 							return 1;
 						}
 					}
 				}
-				chrs.push_back(chr); poss.push_back(pos); rsids.push_back(rsid); refs.push_back(ref); alts.push_back(alt);
 				
 				string geno;
 				while(iss >> geno){
@@ -84,27 +121,22 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_
 						}
 					}
 				}
+				sinfo.push(chr, pos, rsid, ref, alt);
 				if( n1 < n0 ){
-					carriers.push_back( id_1 );
-					dirs.push_back(1);
+					gdat.push( id_1, genov, 1, n1, k );
 				}else{
-					carriers.push_back( id_0 );
-					dirs.push_back(-1);
 					genov.flip();
+					gdat.push( id_0, genov, -1, n0, k );
 				}
-				genotypes.push_back( genov );
 				n_haps = n;
-				BLOCK_ID.push_back(k);
 				k++;
-				
 			}
 		}
 	}
 	return 0;
 }
 
-int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, string &ref_rsid, int &ref_snp, string &ref_ref,  string &ref_alt, int &j_ref, int &matches, vector<vector<int>> &carriers, vector<vector<bool>> &genotypes, vector<int> &dirs, vector<int> &chrs, vector<int> &poss, vector<string> &rsids, vector<string> &refs, vector<string> &alts, int &k, int &n_haps, vector<vector<int>> &HAP_IID, vector<vector<int>> &HAP_CTS, vector<int> &N_HAP, vector<int> &BLOCK_ID, vector<vector<int>> &HAP_MAP, vector<int> &MACS){
-	
+int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, hdata &hdat, int &n_haps){
 	Tabix tfile(m3vcf_path);
 	
 	tfile.setRegion(region);
@@ -116,6 +148,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 	int m_block = 0;
 	int begun = 0;
 	int N_B = 0;
+	int k = 0;
 
 	while( tfile.getNextLine(line) ){
 		if( line[0] != '#' && line.length() > 0 ){
@@ -133,9 +166,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 				if( m_block > 0 ){
 					N_B++;
 					m_block = 0;
-					HAP_IID.push_back(h_iid);
-					HAP_CTS.push_back(h_cts);
-					N_HAP.push_back(h_cts.size());
+					hdat.push_block(h_iid, h_cts, h_cts.size());
 				}
 				h_iid.clear();
 				h_cts.clear();
@@ -169,35 +200,34 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 				//	  if( ! keyExists( observed, rsid ) ){
 				//	    observed.insert({rsid, true});
 				if( begun > 0 && (region_mode < 0 || (pos >= r_start && pos <= r_end) ) ){
-					if( one_vs_all > 0 ){
-						if( rsid==ref_rsid || pos==ref_snp ){
-							matches++;
-							ref_ref = ref;
-							ref_alt = alt;
-							if(ref_rsid == ""){
-								ref_rsid=rsid;
+					if( one_vs_all > 0){
+						if( rsid == target.rsid || pos == target.pos ){
+							target.matches++;
+							target.ref = ref;
+							target.alt = alt;
+							if(target.rsid == ""){
+								target.rsid = rsid;
 							}
-							if( ref_snp < 0 ){
-								ref_snp = pos;
+							if( target.pos < 0 ){
+								target.pos = pos;
 							}
-							j_ref = k;
-							if( matches > 1 ){
-								cerr << "\nERROR: found duplicate matches for target SNP " << chr << ":" << pos << " (rsid " << rsid << ")\n";
+							target.index = k;
+							if( target.matches > 1 ){
+								cerr << "\nERROR: found duplicate target.matches for target SNP " << chr << ":" << pos << " (rsid " << rsid <<")\n";
 								return 1;
 							}
 						}
 					}
 					vector<int> positives;
+					vector<int> negatives;
 					for(string::size_type i = 0; i < format.size(); ++i) {
 						if(format[i]=='1'){
 							positives.push_back(i);
+						}else{
+							negatives.push_back(i);
 						}
 					}
-					HAP_MAP.push_back(positives);
-					BLOCK_ID.push_back(N_B);
-					chrs.push_back(chr); poss.push_back(pos); rsids.push_back(rsid); refs.push_back(ref); alts.push_back(alt);
-					for( int i = 0; i < h_iid.size(); i++ ){
-						
+					for( int i = 0; i < h_iid.size(); i++ ){	
 						if(  binary_search( positives.begin(), positives.end(), h_iid[i] ) ){
 							id_0.push_back(i);
 							genov.push_back(false);
@@ -208,17 +238,16 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 							n1++;
 						}
 					}
-					MACS.push_back(n1);
+					sinfo.push(chr, pos, rsid, ref, alt);
 					if( n1 < n0 ){
-						carriers.push_back( id_1 );
-						dirs.push_back(1);
+						gdat.push( id_1, genov, 1, n1, N_B );
+						hdat.push_map(positives);
 					}else{
-						carriers.push_back( id_0 );
-						dirs.push_back(-1);
 						genov.flip();
+						gdat.push( id_0, genov, -1, n0, N_B );
+						hdat.push_map(negatives);
 					}
-					genotypes.push_back( genov );
-					n_haps = n1 + n0;
+					n_haps = h_iid.size();
 					k++;
 					m_block++;
 				}
@@ -227,9 +256,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 		//line.clear();
 	}
 	if( m_block > 0 ){
-		HAP_IID.push_back(h_iid);
-		HAP_CTS.push_back(h_cts);
-		N_HAP.push_back(h_cts.size());
+		hdat.push_block(h_iid, h_cts, h_cts.size());
 	}
 	return 0;
 }

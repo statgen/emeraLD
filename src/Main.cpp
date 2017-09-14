@@ -31,12 +31,7 @@ void print_usage() {
 
 int main (int argc, char *argv[]){
     cout.precision(5);
-    
-    int k = 0;
-    
-    vector<int> chrs, poss, dirs;
-    vector<string> rsids, refs, alts;
-    
+	
     cerr << "emeraLD v0.1 (c) 2017 corbin quick (corbinq@gmail.com)\n";
     
     string infile = ""; 
@@ -46,11 +41,10 @@ int main (int argc, char *argv[]){
     int max_dist = 1000000;
     int max_sample = 5000;
     
-    string ref_rsid = "";
-	string ref_snp_s = "";
-	int ref_chr = -1;
-    int ref_snp = -1;
-    int j_ref = -1;
+	snpinfo sinfo;
+	targetinfo target;
+	gdata gdat;
+	hdata hdat;
     
     int pstdin = -1;
     int pstdout = -1;
@@ -110,11 +104,11 @@ int main (int argc, char *argv[]){
 			break;
 			case 'm' : matrix_out = 1;
 			break;
-			case 's' : one_vs_all = 1; ref_snp_s = optarg;
+			case 's' : one_vs_all = 1; target.chrpos = optarg;
 			break;
 			case 'p' : extrastats = 1; 
 			break;
-			case 'd' : one_vs_all = 1; ref_rsid = optarg;
+			case 'd' : one_vs_all = 1; target.rsid = optarg;
 			break;
 			case 'r' : region_mode = 1; region = optarg;
 			break;
@@ -131,34 +125,16 @@ int main (int argc, char *argv[]){
 
 	int n_haps;
 
-	int matches = 0;
-
-	int pillow = 100000;
+	int pad = 100000;
 	
-	vector<vector<int>> carriers;
-	vector<vector<bool>> genotypes;
-	string ref_ref, ref_alt;
-	
-	vector<vector<int>> HAP_IID; // maps individuals to haplotypes 
-	vector<vector<int>> HAP_CTS; // haplotype counts per block 
-	
-	vector<int> N_HAP; // number of distinct haplotypes in block, length(HAP_CTS)
-	vector<int> M_HAP; // number of SNPs within block 
-	
-	vector<int> BLOCK_ID; // SNP to haplotype block
-	
-	vector<vector<int>> HAP_MAP; // SNP to haplotype IDs
-	
-	vector<int> MACS;
-	
-	if(ref_snp_s != ""){
-		vector<int> region_v = getRegion(ref_snp_s);
+	if(target.chrpos != ""){
+		vector<int> region_v = getRegion(target.chrpos);
 		if( region_v.size() < 2 ){
 			cerr << "\n\tERROR: SNP format must follow --snp chr:pos\n\n";
 			return 1;
 		}
-		ref_chr = region_v[0];
-		ref_snp = region_v[1];
+		target.chr = region_v[0];
+		target.pos = region_v[1];
 	}
 	
 	if( region_mode > 0 ){
@@ -171,20 +147,20 @@ int main (int argc, char *argv[]){
 		r_start = region_v[1];
 		r_end = region_v[2];
 		
-		if(r_start > pillow + 1){
-			r_start_e = r_start - pillow;
+		if(r_start > pad + 1){
+			r_start_e = r_start - pad;
 		}else{
 			r_start_e = 0;
 		}
-		r_end_e = r_end + pillow; 
+		r_end_e = r_end + pad; 
 		
 		region_e = asRegion(r_chr, r_start_e, r_end_e);
 		
 	}
 	
-	if( one_vs_all > 0 && region_mode < 0 && ref_snp > 0 ){
+	if( one_vs_all > 0 && region_mode < 0 && target.pos > 0 ){
 		region_mode = 1;
-		vector<int> region_v = getRegion(ref_snp_s);
+		vector<int> region_v = getRegion(target.chrpos);
 		r_chr = region_v[0];
 		if( r_start > max_dist +1 ){
 			r_start = region_v[1] - max_dist;
@@ -193,16 +169,23 @@ int main (int argc, char *argv[]){
 		}
 		r_end = region_v[1] + max_dist;
 		
-		if(r_start > pillow + 1){
-			r_start_e = r_start - pillow;
+		if(r_start > pad + 1){
+			r_start_e = r_start - pad;
 		}else{
 			r_start_e = 0;
 		}
-		r_end_e = r_end + pillow; 
+		r_end_e = r_end + pad; 
 		
 		region_e = asRegion(r_chr, r_start_e, r_end_e);
 		
-	} 
+	}
+	
+	if( matrix_out > 0 && one_vs_all > 0 ){
+		cerr << "\n\t--matrix cannot be used with --rsid or --snp\n";
+		cerr << "\n\tuse --help to see more options\n\n";
+		//    print_usage();
+		return 1;
+	}
 	
 	if( help > 0 ){
 		print_usage();
@@ -274,12 +257,12 @@ int main (int argc, char *argv[]){
 	//}
 
 	if( m3vcf < 0 ){
-		if( read_tabixed_vcf(infile, region_e, region_mode, r_start, r_end, one_vs_all, ref_rsid, ref_snp, ref_ref, ref_alt, j_ref, matches, carriers, genotypes, dirs, chrs, poss, rsids, refs, alts, k, n_haps, BLOCK_ID ) > 0 ){
+		if( read_tabixed_vcf(infile, region_e, region_mode, r_start, r_end, one_vs_all, target, gdat, sinfo, n_haps) > 0 ){
 			cerr << "\nERROR: check vcf file " << infile << "\n";
 			return 1;
 		}
 	}else{
-		if( read_tabixed_m3vcf(infile, region_e, region_mode, r_start, r_end, one_vs_all, ref_rsid, ref_snp, ref_ref, ref_alt, j_ref, matches, carriers, genotypes, dirs, chrs, poss, rsids, refs, alts, k, n_haps, HAP_IID, HAP_CTS, N_HAP, BLOCK_ID, HAP_MAP, MACS ) > 0 ){
+		if( read_tabixed_m3vcf(infile, region_e, region_mode, r_start, r_end, one_vs_all, target, gdat, sinfo, hdat, n_haps) > 0 ){
 			cerr << "\nERROR: check m3vcf file " << infile << "\n";
 			return 1;
 		}
@@ -287,14 +270,14 @@ int main (int argc, char *argv[]){
 	
 	if( one_vs_all > 0 ){
 		
-		if( matches < 1 ){
-			cerr << "\nERROR: SNP " << chrs[0] << ":" << ref_snp << " (rsid " << ref_rsid <<") not found!\n";
+		if( target.matches < 1 ){
+			cerr << "\nERROR: SNP " << sinfo.chr[0] << ":" << target.pos << " (rsid " << target.rsid <<") not found!\n";
 			return 1;
 		}
 	}
 	
 	cerr << "\nprocessed genotype data for " << n_haps << " haplotypes...\n";
-	cerr << "\ncalculating LD for " << genotypes.size() << " SNPs...\n\n";
+	cerr << "\ncalculating LD for " << gdat.genotypes.size() << " SNPs...\n\n";
 	
 	//ifclose(inStream);
 	
@@ -327,23 +310,23 @@ int main (int argc, char *argv[]){
 			fprintf(outf, "R\tRsq\n");
 		}
 		
-		for (int i = 0; i < k; i++) {
-			if( abs(ref_snp - poss[i]) < max_dist && poss[i] != ref_snp ){
-				if( BLOCK_ID[i] == BLOCK_ID[j_ref] ){
-					corr_within (r, d, dprime, HAP_MAP[i], HAP_MAP[j_ref], HAP_CTS[BLOCK_ID[i]], MACS[i], MACS[j_ref], n_haps );
+		for (int i = 0; i < sinfo.size(); i++) {
+			if( abs(target.pos - sinfo.pos[i]) < max_dist && sinfo.pos[i] != target.pos ){
+				if( gdat.block[i] == gdat.block[target.index] ){
+					corr_within (r, d, dprime, hdat.map[i], hdat.map[target.index], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[target.index], n_haps );
 				}else{
-					corr(r, d, dprime, carriers[i], carriers[j_ref], genotypes[i], genotypes[j_ref], n_haps, dirs[i], dirs[j_ref], max_sample, vunif );
+					corr(r, d, dprime, gdat.carriers[i], gdat.carriers[target.index], gdat.genotypes[i], gdat.genotypes[target.index], n_haps, gdat.dir[i], gdat.dir[target.index], max_sample, vunif );
 				}
 				if(extra > 0){
-					fprintf (outf,"%u\t", chrs[i]);
-					fprintf (outf,"%u\t", ref_snp);
-					string outl = ref_rsid + "\t" + ref_ref + ":" + ref_alt + "\t";
+					fprintf (outf,"%u\t", sinfo.chr[i]);
+					fprintf (outf,"%u\t", target.pos);
+					string outl = target.rsid + "\t" + target.ref + ":" + target.alt + "\t";
 					fprintf (outf,"%s",outl.c_str());
-					fprintf (outf,"%u\t", poss[i]);
-					outl = rsids[i] + "\t" + refs[i] + ":" + alts[i] + "\t";
+					fprintf (outf,"%u\t", sinfo.pos[i]);
+					outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
 					fprintf (outf,"%s",outl.c_str());
 				}else{
-					fprintf (outf,"%u\t%u\t%u\t",chrs[i], ref_snp, poss[i]);
+					fprintf (outf,"%u\t%u\t%u\t",sinfo.chr[i], target.pos, sinfo.pos[i]);
 				}
 				if(extrastats > 0 ){
 					fprintf (outf,"%.5f\t%.5f\t%.5f\t%.5f\n", r, pow(r,2), d, dprime );
@@ -354,22 +337,36 @@ int main (int argc, char *argv[]){
 		}
 		
 	}else if( matrix_out > 0){
-		
-		for (int i = 0; i < k; i++) {
-			for (int j = 0; j < k; j++) {
-				if( i == j ){
-					r = 1;
-				}else if( abs(poss[i]-poss[j]) < max_dist ){
-					if( BLOCK_ID[i] == BLOCK_ID[j] ){
-						corr_within (r, d, dprime, HAP_MAP[i], HAP_MAP[j], HAP_CTS[BLOCK_ID[i]], MACS[i], MACS[j], n_haps );
-					}else{
-						corr(r, d, dprime, carriers[i], carriers[j], genotypes[i], genotypes[j], n_haps, dirs[i], dirs[j], max_sample, vunif );
-					}
+		int last_i = 0;
+		int last_j = 0;
+		for (int i = 0; i < sinfo.size(); i++) {
+			if( sinfo.pos[i] > last_i ){
+				if(extra > 0){
+					fprintf (outf, "%u\t", sinfo.chr[i]);
+					fprintf (outf, "%u\t", sinfo.pos[i]);
+					string outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
+					fprintf (outf,"%s", outl.c_str());
 				}
-				if( j == k-1 ){
-					fprintf (outf, "%.5f\n", r);
-				}else{
-					fprintf (outf, "%.5f\t", r);
+				last_i = sinfo.pos[i];
+				last_j = 0;
+				for (int j = 0; j < sinfo.size(); j++) {
+					if( sinfo.pos[j] > last_j ){
+						last_j = sinfo.pos[j];
+						if( i == j ){
+							r = 1;
+						}else if( abs(sinfo.pos[i]-sinfo.pos[j]) < max_dist ){
+							if( gdat.block[i] == gdat.block[j] ){
+								corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps );
+							}else{
+								corr(r, d, dprime, gdat.carriers[i], gdat.carriers[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j], max_sample, vunif );
+							}
+						}
+						if( j == sinfo.size()-1 ){
+							fprintf (outf, "%.5f\n", r);
+						}else{
+							fprintf (outf, "%.5f\t", r);
+						}
+					}
 				}
 			}
 		}
@@ -387,25 +384,25 @@ int main (int argc, char *argv[]){
 			fprintf(outf, "R\tRsq\n");
 		}
 		
-		for (int i = 0; i < k - 1; i++) {
-			for (int j = i + 1; j < k; j++) {
-				if( abs((poss[i])-(poss[j])) < max_dist && rsids[i]!=rsids[j] ){
-					if( BLOCK_ID[i] == BLOCK_ID[j] && carriers[i].size() > 25 && carriers[j].size() > 25 ){
-						corr_within (r, d, dprime, HAP_MAP[i], HAP_MAP[j], HAP_CTS[BLOCK_ID[i]], MACS[i], MACS[j], n_haps );
+		for (int i = 0; i < sinfo.size() - 1; i++) {
+			for (int j = i + 1; j < sinfo.size(); j++) {
+				if( abs((sinfo.pos[i])-(sinfo.pos[j])) < max_dist && sinfo.rsid[i]!=sinfo.rsid[j] ){
+					if( gdat.block[i] == gdat.block[j] && gdat.carriers[i].size() > 25 && gdat.carriers[j].size() > 25 ){
+						corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps );
 					}else{
-						corr(r, d, dprime, carriers[i], carriers[j], genotypes[i], genotypes[j], n_haps, dirs[i], dirs[j], max_sample, vunif );
+						corr(r, d, dprime, gdat.carriers[i], gdat.carriers[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j], max_sample, vunif );
 					}
 					if( abs(r) > min_print ){
 						if(extra > 0){
-							fprintf (outf, "%u\t", chrs[i]);
-							fprintf (outf, "%u\t", poss[i]);
-							string outl = rsids[i] + "\t" + refs[i] + ":" + alts[i] + "\t";
+							fprintf (outf, "%u\t", sinfo.chr[i]);
+							fprintf (outf, "%u\t", sinfo.pos[i]);
+							string outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
 							fprintf (outf,"%s", outl.c_str());
-							fprintf (outf, "%u\t", poss[j]);
-							outl = rsids[j] + "\t" + refs[j] + ":" + alts[j] + "\t";
+							fprintf (outf, "%u\t", sinfo.pos[j]);
+							outl = sinfo.rsid[j] + "\t" + sinfo.ref[j] + ":" + sinfo.alt[j] + "\t";
 							fprintf (outf,"%s", outl.c_str());
 						}else{
-							fprintf (outf, "%u\t%u\t%u\t", chrs[i], poss[i], poss[j]);
+							fprintf (outf, "%u\t%u\t%u\t", sinfo.chr[i], sinfo.pos[i], sinfo.pos[j]);
 						}
 						if(extrastats > 0 ){
 							fprintf (outf, "%.5f\t%.5f\t%.5f\t%.5f\n", r, pow(r,2), d, dprime );
