@@ -39,7 +39,7 @@ int main (int argc, char *argv[]){
     
     double min_print = 0.00001;
     int max_dist = 1000000;
-    int max_sample = 5000;
+    int max_sample = 1000;
     
 	snpinfo sinfo;
 	targetinfo target;
@@ -57,16 +57,13 @@ int main (int argc, char *argv[]){
 	int region_mode = -1;
 	string region = "";
 	string region_e = "";
-	int r_chr = -1;
-	int r_start = -1;
-	int r_start_e = -1;
-	int r_end = -1;
-	int r_end_e = -1;
 	
     int help, matrix_out, one_vs_all;
     help = matrix_out = one_vs_all = -1;
     
     int opt = 0;
+	
+	int wmin = 0;
     
     static struct option long_options[] = {
     {"help",      no_argument,  NULL,  'h' },
@@ -82,7 +79,8 @@ int main (int argc, char *argv[]){
 	{"snp",    required_argument, NULL,  's' },
 	{"rsid",    required_argument, NULL,  'd' },
 	{"nmax",    required_argument, NULL,  'n' },
-	{"extra",    no_argument, NULL,  'e' }
+	{"extra",    no_argument, NULL,  'e' },
+	{"wmin",    required_argument, NULL,  'q' }
 	};
 	int long_index =0;
 	while ((opt = getopt_long(argc, argv,"hi:xo:zw:t:ms:",
@@ -116,6 +114,8 @@ int main (int argc, char *argv[]){
 			break;
 			case 'e' : extra = 1;
 			break;
+			case 'q' : wmin = atoi(optarg);
+			break;
 			case '?': 
 			fprintf(stderr, "\ninput error: '%c'.\n", optopt);
 			help = 1;
@@ -124,8 +124,6 @@ int main (int argc, char *argv[]){
 	}
 
 	int n_haps;
-
-	int pad = 100000;
 	
 	if(target.chrpos != ""){
 		vector<int> region_v = getRegion(target.chrpos);
@@ -143,41 +141,18 @@ int main (int argc, char *argv[]){
 			cerr << "\n\tERROR: region input format must follow --region chr:start-end\n\n";
 			return 1;
 		}
-		r_chr = region_v[0];
-		r_start = region_v[1];
-		r_end = region_v[2];
-		
-		if(r_start > pad + 1){
-			r_start_e = r_start - pad;
-		}else{
-			r_start_e = 0;
-		}
-		r_end_e = r_end + pad; 
-		
-		region_e = asRegion(r_chr, r_start_e, r_end_e);
-		
 	}
 	
 	if( one_vs_all > 0 && region_mode < 0 && target.pos > 0 ){
 		region_mode = 1;
 		vector<int> region_v = getRegion(target.chrpos);
-		r_chr = region_v[0];
+		int r_start = region_v[1];
 		if( r_start > max_dist +1 ){
 			r_start = region_v[1] - max_dist;
 		}else{
 			r_start = 0;
 		}
-		r_end = region_v[1] + max_dist;
-		
-		if(r_start > pad + 1){
-			r_start_e = r_start - pad;
-		}else{
-			r_start_e = 0;
-		}
-		r_end_e = r_end + pad; 
-		
-		region_e = asRegion(r_chr, r_start_e, r_end_e);
-		
+		region = asRegion(region_v[0], r_start, region_v[1] + max_dist);
 	}
 	
 	if( matrix_out > 0 && one_vs_all > 0 ){
@@ -257,12 +232,12 @@ int main (int argc, char *argv[]){
 	//}
 
 	if( m3vcf < 0 ){
-		if( read_tabixed_vcf(infile, region_e, region_mode, r_start, r_end, one_vs_all, target, gdat, sinfo, n_haps) > 0 ){
+		if( read_tabixed_vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, n_haps) > 0 ){
 			cerr << "\nERROR: check vcf file " << infile << "\n";
 			return 1;
 		}
 	}else{
-		if( read_tabixed_m3vcf(infile, region_e, region_mode, r_start, r_end, one_vs_all, target, gdat, sinfo, hdat, n_haps) > 0 ){
+		if( read_tabixed_m3vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, hdat, n_haps) > 0 ){
 			cerr << "\nERROR: check m3vcf file " << infile << "\n";
 			return 1;
 		}
@@ -312,8 +287,8 @@ int main (int argc, char *argv[]){
 		
 		for (int i = 0; i < sinfo.size(); i++) {
 			if( abs(target.pos - sinfo.pos[i]) < max_dist && sinfo.pos[i] != target.pos ){
-				if( gdat.block[i] == gdat.block[target.index] ){
-					corr_within (r, d, dprime, hdat.map[i], hdat.map[target.index], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[target.index], n_haps );
+				if( gdat.block[i] == gdat.block[target.index] && gdat.carriers[i].size() > wmin && gdat.carriers[target.index].size() > wmin){
+					corr_within (r, d, dprime, hdat.map[i], hdat.map[target.index], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[target.index], n_haps , gdat.dir[i], gdat.dir[target.index]);
 				}else{
 					corr(r, d, dprime, gdat.carriers[i], gdat.carriers[target.index], gdat.genotypes[i], gdat.genotypes[target.index], n_haps, gdat.dir[i], gdat.dir[target.index], max_sample, vunif );
 				}
@@ -355,8 +330,8 @@ int main (int argc, char *argv[]){
 						if( i == j ){
 							r = 1;
 						}else if( abs(sinfo.pos[i]-sinfo.pos[j]) < max_dist ){
-							if( gdat.block[i] == gdat.block[j] ){
-								corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps );
+							if( gdat.block[i] == gdat.block[j] && gdat.carriers[i].size() > wmin && gdat.carriers[j].size() > wmin ){
+								corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps, gdat.dir[i], gdat.dir[j] );
 							}else{
 								corr(r, d, dprime, gdat.carriers[i], gdat.carriers[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j], max_sample, vunif );
 							}
@@ -387,8 +362,8 @@ int main (int argc, char *argv[]){
 		for (int i = 0; i < sinfo.size() - 1; i++) {
 			for (int j = i + 1; j < sinfo.size(); j++) {
 				if( abs((sinfo.pos[i])-(sinfo.pos[j])) < max_dist && sinfo.rsid[i]!=sinfo.rsid[j] ){
-					if( gdat.block[i] == gdat.block[j] && gdat.carriers[i].size() > 25 && gdat.carriers[j].size() > 25 ){
-						corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps );
+					if( gdat.block[i] == gdat.block[j] && gdat.carriers[i].size() > wmin && gdat.carriers[j].size() > wmin ){
+						corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps, gdat.dir[i], gdat.dir[j] );
 					}else{
 						corr(r, d, dprime, gdat.carriers[i], gdat.carriers[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j], max_sample, vunif );
 					}

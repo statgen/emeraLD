@@ -59,15 +59,31 @@ string asRegion (int chr, int pos, int end){
 }
 
 
-int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, int &n_haps){
+int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, int &n_haps){
+	
 	Tabix tfile(vcf_path);
 	
+	int r_chr, r_start, r_end;
+	r_chr = r_start = r_end = -1;
+	
+	string region_e;
+	if( region_mode > 0 ){
+		vector<int> region_v = getRegion(region);
+		r_chr = region_v[0];
+		r_start = region_v[1];
+		r_end = region_v[2];
+	}
+	
 	tfile.setRegion(region);
-
+	
 	string line;
 	
 	int k = 0;
-
+	
+	if(sinfo.size() > 0){
+		k = sinfo.size();
+	}
+	
 	while ( tfile.getNextLine(line) ) {
 
 		if( line[0] != '#' && line.length() > 0 ){
@@ -136,10 +152,27 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_
 	return 0;
 }
 
-int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, hdata &hdat, int &n_haps){
+int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, hdata &hdat, int &n_haps){
 	Tabix tfile(m3vcf_path);
 	
-	tfile.setRegion(region);
+	int r_chr, r_start, r_end;
+	r_chr = r_start = r_end = -1;
+	int pad = 100000;
+	
+	string region_e;
+	if( region_mode > 0 ){
+		vector<int> region_v = getRegion(region);
+		r_chr = region_v[0];
+		r_start = region_v[1];
+		r_end = region_v[2];
+		if(r_start > pad + 1){
+			region_e = asRegion(r_chr, r_start - pad, r_end + pad);
+		}else{
+			region_e = asRegion(r_chr, 0, r_end + pad);
+		}
+	}
+
+	tfile.setRegion(region_e);
 
 	string line;
 
@@ -149,7 +182,12 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 	int begun = 0;
 	int N_B = 0;
 	int k = 0;
-
+	
+	if(sinfo.size() > 0){
+		k = sinfo.size();
+		N_B = gdat.block[k-1];
+	}
+	
 	while( tfile.getNextLine(line) ){
 		if( line[0] != '#' && line.length() > 0 ){
 			
@@ -241,11 +279,11 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 					sinfo.push(chr, pos, rsid, ref, alt);
 					if( n1 < n0 ){
 						gdat.push( id_1, genov, 1, n1, N_B );
-						hdat.push_map(positives);
+						hdat.push_map(negatives);
 					}else{
 						genov.flip();
 						gdat.push( id_0, genov, -1, n0, N_B );
-						hdat.push_map(negatives);
+						hdat.push_map(positives);
 					}
 					n_haps = h_iid.size();
 					k++;

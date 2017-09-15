@@ -61,7 +61,7 @@ vector<int> getRegion (string str);
 
 string asRegion (int chr, int pos, int end);
 
-int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, int &n_haps);
+int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, int &n_haps);
 
-int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &r_start, int &r_end, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, hdata &hdat, int &n_haps);
+int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, hdata &hdat, int &n_haps);
 

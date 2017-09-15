@@ -1,4 +1,5 @@
 #include "calcLD.hpp"
+#include<iostream>
 
 using namespace std;
 
@@ -42,7 +43,7 @@ void corr (double &R, double &D, double &DPRIME, vector<int> &G1, vector<int> &G
     }else{
         E12 = sizeIntersection(G2, SS2, geno1, N, mmax, uvec);
     }
-    
+	
     double SD1 = sqrt(EG1)*sqrt(1 - EG1);
     double SD2 = sqrt(EG2)*sqrt(1 - EG2);
     double C12 = E12 - EG1*EG2;
@@ -75,7 +76,7 @@ void corr (double &R, double &D, double &DPRIME, vector<int> &G1, vector<int> &G
 	return;
 }
 
-void corr_within (double &R, double &D, double &DPRIME, vector<int> &idx_i, vector<int> &idx_j, vector<int> &hac, int &m_i, int &m_j, int &n){
+void corr_within (double &R, double &D, double &DPRIME, vector<int> &idx_i, vector<int> &idx_j, vector<int> &hac, int &m_i, int &m_j, int &n, int &D1, int &D2){
 
 	if( m_i == 0 || m_i == n || m_j == 0 || m_j == n ){
        	R = 0;
@@ -89,24 +90,24 @@ void corr_within (double &R, double &D, double &DPRIME, vector<int> &idx_i, vect
 	double pij = 0;
 	int x_i = 0; int x_j = 0;
 	while(x_i < idx_i.size() && x_j < idx_j.size() ){
-	//	// cout  << idx_i[x_i] << "\t" << idx_j[x_j] << "\n" ; 
 		if( idx_i[x_i] > idx_j[x_j] ){
 			x_j++;
 		}else if( idx_i[x_i] < idx_j[x_j] ){
 			x_i++;
 		}else if( idx_i[x_i] == idx_j[x_j] ){
-			pij += hac[ idx_i[x_i] ]/(double)n;
+			pij += hac[ idx_i[x_i] ];
 			x_i++;
 			x_j++;
 		}
 	}
+	pij = pij / n;
 	if( pij > pi ){
 		pij = pi;
 	}
 	if( pij > pj ){
 		pij = pj;
 	}
-	D = (pij - pi*pj );
+	D = D1 * D2 * (pij - pi*pj );
 	R = D/sqrt(pi * (1- pi) * pj * (1 - pj));
 	
 	if( D < 0 ){
