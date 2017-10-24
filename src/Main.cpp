@@ -361,7 +361,7 @@ int main (int argc, char *argv[]){
 		
 		for (int i = 0; i < sinfo.size() - 1; i++) {
 			for (int j = i + 1; j < sinfo.size(); j++) {
-				if( abs((sinfo.pos[i])-(sinfo.pos[j])) < max_dist && sinfo.rsid[i]!=sinfo.rsid[j] ){
+			  if( abs((sinfo.pos[i])-(sinfo.pos[j])) < max_dist && (sinfo.pos[i] < sinfo.pos[j] || sinfo.rsid[i]!=sinfo.rsid[j] ) ){
 					if( gdat.block[i] == gdat.block[j] && gdat.carriers[i].size() > wmin && gdat.carriers[j].size() > wmin ){
 						corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps, gdat.dir[i], gdat.dir[j] );
 					}else{
