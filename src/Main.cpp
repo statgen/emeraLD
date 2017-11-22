@@ -25,15 +25,15 @@ void print_usage() {
     cerr << "\t\t--snp STR : only print pairwise LD for specified SNP (chr:pos) \n";
     cerr << "\t\t--rsid STR : only print pairwise LD for specified SNP \n";
 	cerr << "\t\t--window INT : only calculate LD between SNPs within specified bp window (default: 1Mbp)\n";
-    cerr << "\t\t--threshold DOUBLE : only print LD if abs(LD) > threshold (default: 1e-5)\n\n";
+    cerr << "\t\t--threshold DOUBLE : only print LD if abs(LD) > threshold (default: 1e-5)\n";
 	cerr << "\tvariant filtering\n";
 	cerr << "\t\t--mac INT : minimum minor allele count \n";
 	cerr << "\t\t--max-mac INT : maximum minor allele count \n";
 	cerr << "\tindividual filtering\n";
 	cerr << "\t\t--include STR : one-column file of individual IDs to include\n";
 	cerr << "\t\t--exclude STR : one-column file of individual IDs to exclude\n";
-
     //  cerr << "\t\t--nmax INT : LD precision parameter (default: 5000)\n\n";
+	cerr << "\n";
 }
 
 int main (int argc, char *argv[]){
@@ -59,8 +59,10 @@ int main (int argc, char *argv[]){
     int extra = -1;
 	int extrastats = -1;
 	
-	int max_mac = 100000000;
-	int min_mac = 1;
+	foptions fopts;
+	
+	fopts.max_mac = 100000000;
+	fopts.min_mac = 1;
 	
 	string keepfile = "";
 	string exclfile = "";
@@ -137,9 +139,9 @@ int main (int argc, char *argv[]){
 			break;
 			case 'v' : exclfile = optarg;
 			break;
-			case 'f' : max_mac = atoi(optarg);
+			case 'f' : fopts.min_mac = atoi(optarg);
 			break;
-			case 'a' : min_mac = atoi(optarg);			
+			case 'a' : fopts.max_mac = atoi(optarg);			
 			break;
 			case 'q' : wmin = atoi(optarg);
 			break;
@@ -272,12 +274,12 @@ int main (int argc, char *argv[]){
 	//}
 
 	if( m3vcf < 0 ){
-		if( read_tabixed_vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, idat, n_haps) > 0 ){
+		if( read_tabixed_vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, idat, n_haps, fopts) > 0 ){
 			cerr << "\nERROR: check vcf file " << infile << "\n";
 			return 1;
 		}
 	}else{
-		if( read_tabixed_m3vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, idat, hdat, n_haps) > 0 ){
+		if( read_tabixed_m3vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, idat, hdat, n_haps, fopts) > 0 ){
 			cerr << "\nERROR: check m3vcf file " << infile << "\n";
 			return 1;
 		}

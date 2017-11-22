@@ -128,7 +128,7 @@ string asRegion (int chr, int pos, int end){
 	return out;
 }
 
-int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps){
+int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, foptions &fopts){
 	
 	Tabix tfile(vcf_path);
 	
@@ -210,22 +210,24 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &on
 					}
 					ii++;
 				}
-				sinfo.push(chr, pos, rsid, ref, alt);
-				if( n1 < n0 ){
-					gdat.push( id_1, genov, 1, n1, k );
-				}else{
-					genov.flip();
-					gdat.push( id_0, genov, -1, n0, k );
+				if( (n1 >= fopts.min_mac || n0 >= fopts.min_mac) && (n1 <= fopts.max_mac || n0 <= fopts.max_mac) ){
+					sinfo.push(chr, pos, rsid, ref, alt);
+					if( n1 < n0 ){
+						gdat.push( id_1, genov, 1, n1, k );
+					}else{
+						genov.flip();
+						gdat.push( id_0, genov, -1, n0, k );
+					}
+					n_haps = n;
+					k++;
 				}
-				n_haps = n;
-				k++;
 			}
 		}
 	}
 	return 0;
 }
 
-int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, hdata &hdat, int &n_haps){
+int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, hdata &hdat, int &n_haps, foptions &fopts){
 	Tabix tfile(m3vcf_path);
 	
 	int r_chr, r_start, r_end;
@@ -353,18 +355,20 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 							n1++;
 						}
 					}
-					sinfo.push(chr, pos, rsid, ref, alt);
-					if( n1 < n0 ){
-						gdat.push( id_1, genov, 1, n1, N_B );
-						hdat.push_map(negatives);
-					}else{
-						genov.flip();
-						gdat.push( id_0, genov, -1, n0, N_B );
-						hdat.push_map(positives);
+					if( (n1 >= fopts.min_mac || n0 >= fopts.min_mac) && (n1 <= fopts.max_mac || n0 <= fopts.max_mac) ){
+						sinfo.push(chr, pos, rsid, ref, alt);
+						if( n1 < n0 ){
+							gdat.push( id_1, genov, 1, n1, N_B );
+							hdat.push_map(negatives);
+						}else{
+							genov.flip();
+							gdat.push( id_0, genov, -1, n0, N_B );
+							hdat.push_map(positives);
+						}
+						n_haps = h_iid.size();
+						k++;
+						m_block++;
 					}
-					n_haps = h_iid.size();
-					k++;
-					m_block++;
 				}
 			}
 		}

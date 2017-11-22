@@ -72,11 +72,21 @@ class gdata
 		void push (vector<int>, vector<bool>, int, int, int) ;
 };
 
+class foptions 
+{
+	public:
+		int min_mac; 
+		int max_mac;
+		bool no_snps;
+		bool no_indels;
+		double qual;
+};
+
 vector<int> getRegion (string str);
 
 string asRegion (int chr, int pos, int end);
 
-int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps);
+int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, foptions &fopts);
 
-int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, hdata &hdat, int &n_haps);
+int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, hdata &hdat, int &n_haps, foptions &fopts);
 
