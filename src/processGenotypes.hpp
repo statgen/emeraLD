@@ -14,13 +14,13 @@ using namespace std;
 class snpinfo
 {
 	public:
-		vector<int> chr; 
+		vector<string> chr; 
 		vector<int> pos;
 		vector<string> rsid; 
 		vector<string> ref; 
 		vector<string> alt; 
 		unsigned int size() ;
-		void push (int, int, string, string, string) ;
+		void push (string, int, string, string, string) ;
 };
 
 class idata
@@ -39,7 +39,7 @@ class idata
 class targetinfo
 {
 	public:
-		int chr; 
+		string chr; 
 		int pos; 
 		string rsid;
 		string chrpos;
@@ -47,7 +47,7 @@ class targetinfo
 		string alt; 
 		int index; 
 		int matches;
-		targetinfo() : chr(-1), pos(-1), chrpos(""), rsid(""), ref(""), alt(""), index(-1), matches(0) {}
+		targetinfo() : chr(""), pos(-1), chrpos(""), rsid(""), ref(""), alt(""), index(-1), matches(0) {}
 };
 
 class hdata 
@@ -82,9 +82,11 @@ class foptions
 		double qual;
 };
 
-vector<int> getRegion (string str);
+vector<string> getRegion (string str);
 
 string asRegion (int chr, int pos, int end);
+string asRegion (string chr, int pos, int end);
+string asRegion (string chr, string pos, string end);
 
 int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, foptions &fopts);
 

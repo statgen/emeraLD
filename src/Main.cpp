@@ -155,13 +155,13 @@ int main (int argc, char *argv[]){
 	int n_haps;
 	
 	if(target.chrpos != ""){
-		vector<int> region_v = getRegion(target.chrpos);
+		vector<string> region_v = getRegion(target.chrpos);
 		if( region_v.size() < 2 ){
 			cerr << "\n\tERROR: SNP format must follow --snp chr:pos\n\n";
 			return 1;
 		}
 		target.chr = region_v[0];
-		target.pos = region_v[1];
+		target.pos = stoi(region_v[1]);
 	}
 	
 	if( keepfile != "" ){
@@ -178,7 +178,7 @@ int main (int argc, char *argv[]){
 	idat.process(infile);
 	
 	if( region_mode > 0 ){
-		vector<int> region_v = getRegion(region);
+		vector<string> region_v = getRegion(region);
 		if( region_v.size() < 3 ){
 			cerr << "\n\tERROR: region input format must follow --region chr:start-end\n\n";
 			return 1;
@@ -187,14 +187,14 @@ int main (int argc, char *argv[]){
 	
 	if( one_vs_all > 0 && region_mode < 0 && target.pos > 0 ){
 		region_mode = 1;
-		vector<int> region_v = getRegion(target.chrpos);
-		int r_start = region_v[1];
+		vector<string> region_v = getRegion(target.chrpos);
+		int r_start = stoi(region_v[1]);
 		if( r_start > max_dist +1 ){
-			r_start = region_v[1] - max_dist;
+			r_start = stoi(region_v[1]) - max_dist;
 		}else{
 			r_start = 0;
 		}
-		region = asRegion(region_v[0], r_start, region_v[1] + max_dist);
+		region = asRegion(region_v[0], r_start, stoi(region_v[1]) + max_dist);
 	}
 	
 	if( matrix_out > 0 && one_vs_all > 0 ){
@@ -293,6 +293,17 @@ int main (int argc, char *argv[]){
 		}
 	}
 	
+	if( gdat.genotypes.size() < 1 ){
+		if( region_mode > 0 ){
+			cerr << "\nERROR: Found no SNPs in region " << region << " ... \n";
+			cerr << "\nhint: make sure chr:pos formatting matches input file\n\n";
+		}else{
+			cerr << "\nERROR: For no SNPs in input file!\n";
+			cerr << "\nhint: check input file formatting\n\n";
+		}
+		return 1;
+	}
+	
 	cerr << "\nprocessed genotype data for " << n_haps << " haplotypes...\n";
 	cerr << "\ncalculating LD for " << gdat.genotypes.size() << " SNPs...\n\n";
 	
@@ -335,7 +346,8 @@ int main (int argc, char *argv[]){
 					corr(r, d, dprime, gdat.carriers[i], gdat.carriers[target.index], gdat.genotypes[i], gdat.genotypes[target.index], n_haps, gdat.dir[i], gdat.dir[target.index], max_sample, vunif );
 				}
 				if(extra > 0){
-					fprintf (outf,"%u\t", sinfo.chr[i]);
+					//fprintf (outf,"%u\t", sinfo.chr[i]);
+					fprintf (outf,"%s\t", sinfo.chr[i].c_str());
 					fprintf (outf,"%u\t", target.pos);
 					string outl = target.rsid + "\t" + target.ref + ":" + target.alt + "\t";
 					fprintf (outf,"%s",outl.c_str());
@@ -343,7 +355,8 @@ int main (int argc, char *argv[]){
 					outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
 					fprintf (outf,"%s",outl.c_str());
 				}else{
-					fprintf (outf,"%u\t%u\t%u\t",sinfo.chr[i], target.pos, sinfo.pos[i]);
+					//fprintf (outf,"%u\t%u\t%u\t",sinfo.chr[i], target.pos, sinfo.pos[i]);
+					fprintf (outf,"%s\t%u\t%u\t",sinfo.chr[i].c_str(), target.pos, sinfo.pos[i]);
 				}
 				if(extrastats > 0 ){
 					fprintf (outf,"%.5f\t%.5f\t%.5f\t%.5f\n", r, pow(r,2), d, dprime );
@@ -359,7 +372,8 @@ int main (int argc, char *argv[]){
 		for (int i = 0; i < sinfo.size(); i++) {
 			if( sinfo.pos[i] > last_i ){
 				if(extra > 0){
-					fprintf (outf, "%u\t", sinfo.chr[i]);
+					//fprintf (outf, "%u\t", sinfo.chr[i]);
+					fprintf (outf, "%s\t", sinfo.chr[i].c_str());
 					fprintf (outf, "%u\t", sinfo.pos[i]);
 					string outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
 					fprintf (outf,"%s", outl.c_str());
@@ -411,7 +425,8 @@ int main (int argc, char *argv[]){
 					}
 					if( abs(r) > min_print ){
 						if(extra > 0){
-							fprintf (outf, "%u\t", sinfo.chr[i]);
+							//fprintf (outf, "%u\t", sinfo.chr[i]);
+							fprintf (outf, "%s\t", sinfo.chr[i].c_str());
 							fprintf (outf, "%u\t", sinfo.pos[i]);
 							string outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
 							fprintf (outf,"%s", outl.c_str());
@@ -419,7 +434,8 @@ int main (int argc, char *argv[]){
 							outl = sinfo.rsid[j] + "\t" + sinfo.ref[j] + ":" + sinfo.alt[j] + "\t";
 							fprintf (outf,"%s", outl.c_str());
 						}else{
-							fprintf (outf, "%u\t%u\t%u\t", sinfo.chr[i], sinfo.pos[i], sinfo.pos[j]);
+							//fprintf (outf, "%u\t%u\t%u\t", sinfo.chr[i], sinfo.pos[i], sinfo.pos[j]);
+							fprintf (outf, "%s\t%u\t%u\t", sinfo.chr[i].c_str(), sinfo.pos[i], sinfo.pos[j]);
 						}
 						if(extrastats > 0 ){
 							fprintf (outf, "%.5f\t%.5f\t%.5f\t%.5f\n", r, pow(r,2), d, dprime );

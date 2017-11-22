@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void snpinfo::push(int ch, int po, string rs, string rf, string al)  
+void snpinfo::push(string ch, int po, string rs, string rf, string al)  
 {
 	chr.push_back(ch);
 	pos.push_back(po);
@@ -107,18 +107,25 @@ void idata::open(string idpath, bool kmode){
 	}
 }
 
-vector<int> getRegion (string str){
-	vector<int> v ; 
+vector<string> getRegion (string str){
+	vector<string> v ; 
 	size_t prev_pos = 0, pos;
+	string ss;
 	while ((pos = str.find_first_of(":-,", prev_pos)) != std::string::npos)
 	{
 		if (pos > prev_pos){
-			v.push_back(stoi(str.substr(prev_pos, pos-prev_pos)));
+			ss = str.substr(prev_pos, pos-prev_pos);
+			//ss = ss.substr(ss.find("chr")+1,ss.size());
+			//v.push_back(stoi(ss));
+			v.push_back(ss);
 		}
 		prev_pos= pos+1;
     }
     if (prev_pos< str.length()){
-        v.push_back(stoi(str.substr(prev_pos, std::string::npos)));
+		ss = str.substr(prev_pos, std::string::npos);
+		//ss = ss.substr(ss.find("chr")+1,ss.size());
+        //v.push_back(stoi(ss));
+		v.push_back(ss);
 	}
 	return v;
 }
@@ -128,21 +135,39 @@ string asRegion (int chr, int pos, int end){
 	return out;
 }
 
+string asRegion (string chr, int pos, int end){
+	string out = chr + ":" + to_string(pos) + "-" + to_string(end);
+	return out;
+}
+
+string asRegion (string chr, string pos, string end){
+	string out = chr + ":" + pos + "-" + end;
+	return out;
+}
+
 int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, foptions &fopts){
 	
 	Tabix tfile(vcf_path);
 	
-	int r_chr, r_start, r_end;
-	r_chr = r_start = r_end = -1;
+	/*string chr_pfx;
+	tfile.getHeader(chr_pfx);
+	tfile.getNextLine(chr_pfx);
+	chr_pfx = chr_pfx.substr(0,chr_pfx.find_first_of("\t"));
+	chr_pfx = chr_pfx.substr(0,chr_pfx.find("chr")+3);*/
+	
+	int r_start, r_end;
+	r_start = r_end = -1;
+	string r_chr;
 	
 	string region_e;
 	if( region_mode > 0 ){
-		vector<int> region_v = getRegion(region);
+		vector<string> region_v = getRegion(region);
 		r_chr = region_v[0];
-		r_start = region_v[1];
-		r_end = region_v[2];
+		r_start = stoi(region_v[1]);
+		r_end = stoi(region_v[2]);
 	}
 	
+//	region = chr_pfx + region;
 	tfile.setRegion(region);
 	
 	string line;
@@ -159,7 +184,8 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &on
 			
 			string rsid, ref, alt, qual, filter, info, format;
 			
-			int chr, n, n1, n0;
+			string chr;
+			int n, n1, n0;
 			int pos;
 			n = n1 = n0 = 0;
 			vector<int> id_0, id_1;
@@ -169,7 +195,7 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &on
 			
 			iss >> chr >> pos >> rsid >> ref >> alt >> qual >> filter >> info >> format;
 			
-			if( region_mode < 0 || (pos >= r_start && pos <= r_end) ){
+			if( region_mode < 0 || (pos >= r_start && pos <= r_end && chr == r_chr) ){
 			
 				if( one_vs_all > 0){
 					if( rsid == target.rsid || pos == target.pos ){
@@ -230,16 +256,23 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &on
 int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, hdata &hdat, int &n_haps, foptions &fopts){
 	Tabix tfile(m3vcf_path);
 	
-	int r_chr, r_start, r_end;
-	r_chr = r_start = r_end = -1;
+/*	string chr_pfx;
+	tfile.getHeader(chr_pfx);
+	tfile.getNextLine(chr_pfx);
+	chr_pfx = chr_pfx.substr(0,chr_pfx.find_first_of("\t"));
+	chr_pfx = chr_pfx.substr(0,chr_pfx.find("chr")+3);*/
+	
+	int r_start, r_end;
+	r_start = r_end = -1;
 	int pad = 100000;
+	string r_chr;
 	
 	string region_e;
 	if( region_mode > 0 ){
-		vector<int> region_v = getRegion(region);
+		vector<string> region_v = getRegion(region);
 		r_chr = region_v[0];
-		r_start = region_v[1];
-		r_end = region_v[2];
+		r_start = stoi(region_v[1]);
+		r_end = stoi(region_v[2]);
 		if(r_start > pad + 1){
 			region_e = asRegion(r_chr, r_start - pad, r_end + pad);
 		}else{
@@ -247,6 +280,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 		}
 	}
 
+//	region_e = chr_pfx + region_e;
 	tfile.setRegion(region_e);
 
 	string line;
@@ -268,7 +302,8 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 			
 			string rsid, ref, alt, qual, filter, info, format;
 			
-			int chr, pos, n1, n0;
+			string chr;
+			int pos, n1, n0;
 			n1 = n0 = 0;
 			vector<int> id_0, id_1;
 			vector<bool> genov;
@@ -316,7 +351,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 				iss >> chr >> pos >> rsid >> ref >> alt >> qual >> filter >> info >> format;
 				//	  if( ! keyExists( observed, rsid ) ){
 				//	    observed.insert({rsid, true});
-				if( begun > 0 && (region_mode < 0 || (pos >= r_start && pos <= r_end) ) ){
+				if( begun > 0 && (region_mode < 0 || (pos >= r_start && pos <= r_end && chr == r_chr) ) ){
 					if( one_vs_all > 0){
 						if( rsid == target.rsid || pos == target.pos ){
 							target.matches++;
