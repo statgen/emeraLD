@@ -36,6 +36,75 @@ void hdata::push_map (vector<int> ma)
 	map.push_back(ma);
 }
 
+bool idata::process(string input){
+	if( filter_mode ){
+		Tabix tfile(input);
+		string header;
+		tfile.getHeader(header);
+		header = header.substr(0, header.find_last_of("\n"));
+		header = header.substr(header.find_last_of("\n")+1);
+		string id;
+		istringstream iss(header);
+		for(int i = 0; i < 9; i++){
+			iss >> id;
+		}
+//		cout << "Processing VCF IIDs ... \n";
+		while(iss >> id){
+//			cout << "\t" << id << "\t" << keep(id) << "\n";
+			kcols.push_back(keep(id));
+		}
+	}
+	return true;
+}
+
+bool idata::keep( string id ){
+	if( filter_mode ){
+		if( ids.count(id) > 0 ){
+			if( keep_mode ){
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			if( keep_mode ){
+				return false;
+			}else{
+				return true;
+			}
+		}
+	}else{
+		return true;
+	}
+}
+
+bool idata::keep( int i ){
+	if( filter_mode ){
+		if( i < kcols.size() ){
+			return kcols[i];
+		}else{
+			return false; 
+		}
+	}else{
+		return true;
+	}
+}
+
+void idata::open(string idpath, bool kmode){
+	if(idpath == ""){
+		filter_mode = false;
+	}else{
+		filter_mode = true;
+		keep_mode = kmode;
+		ifstream idfile(idpath);
+	//	cout << "Processing ID file ... \n";
+		string id;
+		while( idfile >> id ){
+//			cout << "\t" << id << "\n";
+			ids.insert(id);
+		}
+		idfile.close();
+	}
+}
 
 vector<int> getRegion (string str){
 	vector<int> v ; 
@@ -59,7 +128,7 @@ string asRegion (int chr, int pos, int end){
 }
 
 
-int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, int &n_haps){
+int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps){
 	
 	Tabix tfile(vcf_path);
 	
@@ -122,20 +191,24 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &on
 				}
 				
 				string geno;
+				int ii = 0;
 				while(iss >> geno){
-					for (int idx = 0; idx < 3; idx += 2){
-						if( geno[idx] == '0' ){
-							id_0.push_back(n);
-							genov.push_back(false);
-							n0++;
-							n++;
-						}else if( geno[idx] == '1' ){
-							id_1.push_back(n);
-							genov.push_back(true);
-							n1++;
-							n++;
+					if( idat.keep(ii) ){
+						for (int idx = 0; idx < 3; idx += 2){
+							if( geno[idx] == '0' ){
+								id_0.push_back(n);
+								genov.push_back(false);
+								n0++;
+								n++;
+							}else if( geno[idx] == '1' ){
+								id_1.push_back(n);
+								genov.push_back(true);
+								n1++;
+								n++;
+							}
 						}
 					}
+					ii++;
 				}
 				sinfo.push(chr, pos, rsid, ref, alt);
 				if( n1 < n0 ){
@@ -152,7 +225,7 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &on
 	return 0;
 }
 
-int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, hdata &hdat, int &n_haps){
+int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, hdata &hdat, int &n_haps){
 	Tabix tfile(m3vcf_path);
 	
 	int r_chr, r_start, r_end;
@@ -217,13 +290,17 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 				int genotype;
 				int max_h = 0;
 				n_haps = 0;
+				int ii = 0;
 				while(iss >> geno){
-					genotype = stoi(geno);
-					if(genotype > max_h ){
-						max_h = genotype;
+					if( idat.keep(ii) ){
+						genotype = stoi(geno);
+						if(genotype > max_h ){
+							max_h = genotype;
+						}
+						h_iid.push_back(genotype);
+						n_haps++;
 					}
-					h_iid.push_back(genotype);
-					n_haps++;
+					ii++;
 				}
 				for (int i = 0; i < max_h; i++){
 					h_cts.push_back(0);

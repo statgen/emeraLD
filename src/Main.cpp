@@ -24,8 +24,15 @@ void print_usage() {
 	cerr << "\t\t--region STR : calculate LD for SNPs in region (chr:start-end) \n";
     cerr << "\t\t--snp STR : only print pairwise LD for specified SNP (chr:pos) \n";
     cerr << "\t\t--rsid STR : only print pairwise LD for specified SNP \n";
-    cerr << "\t\t--window INT : only calculate LD between SNPs within specified bp window (default: 1Mbp)\n";
+	cerr << "\t\t--window INT : only calculate LD between SNPs within specified bp window (default: 1Mbp)\n";
     cerr << "\t\t--threshold DOUBLE : only print LD if abs(LD) > threshold (default: 1e-5)\n\n";
+//	cerr << "\tvariant filtering\n";
+//	cerr << "\t\t--mac INT : minimum minor allele count \n";
+//	cerr << "\t\t--max-mac INT : maximum minor allele count \n";
+	cerr << "\tindividual filtering\n";
+	cerr << "\t\t--keep-ids STR : file containing IDs of individuals to include\n";
+	cerr << "\t\t--excl-ids STR : file containing IDs of individuals to include\n";
+
     //  cerr << "\t\t--nmax INT : LD precision parameter (default: 5000)\n\n";
 }
 
@@ -51,6 +58,14 @@ int main (int argc, char *argv[]){
     
     int extra = -1;
 	int extrastats = -1;
+	
+	int max_mac = 100000000;
+	int min_mac = 1;
+	
+	string keepfile = "";
+	string exclfile = "";
+	
+	idata idat;
 	
 	//int use_tabix = -1;
 	
@@ -79,6 +94,10 @@ int main (int argc, char *argv[]){
 	{"snp",    required_argument, NULL,  's' },
 	{"rsid",    required_argument, NULL,  'd' },
 	{"nmax",    required_argument, NULL,  'n' },
+	{"keep-ids",      required_argument,  NULL,  'k' },
+	{"excl-ids",      required_argument,  NULL,  'v' },
+	{"mac",      required_argument,  NULL,  'f' },
+	{"max-mac",      required_argument,  NULL,  'a' },
 	{"extra",    no_argument, NULL,  'e' },
 	{"wmin",    required_argument, NULL,  'q' }
 	};
@@ -114,6 +133,14 @@ int main (int argc, char *argv[]){
 			break;
 			case 'e' : extra = 1;
 			break;
+			case 'k' : keepfile = optarg;
+			break;
+			case 'v' : exclfile = optarg;
+			break;
+			case 'f' : max_mac = atoi(optarg);
+			break;
+			case 'a' : min_mac = atoi(optarg);			
+			break;
 			case 'q' : wmin = atoi(optarg);
 			break;
 			case '?': 
@@ -134,6 +161,19 @@ int main (int argc, char *argv[]){
 		target.chr = region_v[0];
 		target.pos = region_v[1];
 	}
+	
+	if( keepfile != "" ){
+		if( exclfile != "" ){
+			cerr << "\n\tERROR: you can specify --keep-ids or --excl-ids, but not both\n\n";
+			return 1;
+		}else{
+			idat.open(keepfile, true);
+		}
+	}else{
+		idat.open(exclfile, false);
+	}
+	
+	idat.process(infile);
 	
 	if( region_mode > 0 ){
 		vector<int> region_v = getRegion(region);
@@ -232,12 +272,12 @@ int main (int argc, char *argv[]){
 	//}
 
 	if( m3vcf < 0 ){
-		if( read_tabixed_vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, n_haps) > 0 ){
+		if( read_tabixed_vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, idat, n_haps) > 0 ){
 			cerr << "\nERROR: check vcf file " << infile << "\n";
 			return 1;
 		}
 	}else{
-		if( read_tabixed_m3vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, hdat, n_haps) > 0 ){
+		if( read_tabixed_m3vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, idat, hdat, n_haps) > 0 ){
 			cerr << "\nERROR: check m3vcf file " << infile << "\n";
 			return 1;
 		}

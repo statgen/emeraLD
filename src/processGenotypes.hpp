@@ -1,11 +1,13 @@
 #include "tabix_util/tabix.hpp"
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <sstream>
 #include <stdlib.h>
 #include <string>
 #include <vector>
 #include <stdio.h>
+#include <unordered_set>
 
 using namespace std;
 
@@ -19,6 +21,19 @@ class snpinfo
 		vector<string> alt; 
 		unsigned int size() ;
 		void push (int, int, string, string, string) ;
+};
+
+class idata
+{
+	public:
+		unordered_set<string> ids;
+		vector<bool> kcols;
+		bool filter_mode;
+		bool keep_mode; 
+		bool keep(string);
+		bool keep(int);
+		bool process(string);
+		void open(string, bool); 
 };
 
 class targetinfo
@@ -61,7 +76,7 @@ vector<int> getRegion (string str);
 
 string asRegion (int chr, int pos, int end);
 
-int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, int &n_haps);
+int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps);
 
-int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, hdata &hdat, int &n_haps);
+int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, hdata &hdat, int &n_haps);
 
