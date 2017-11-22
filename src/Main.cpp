@@ -26,12 +26,12 @@ void print_usage() {
     cerr << "\t\t--rsid STR : only print pairwise LD for specified SNP \n";
 	cerr << "\t\t--window INT : only calculate LD between SNPs within specified bp window (default: 1Mbp)\n";
     cerr << "\t\t--threshold DOUBLE : only print LD if abs(LD) > threshold (default: 1e-5)\n\n";
-//	cerr << "\tvariant filtering\n";
-//	cerr << "\t\t--mac INT : minimum minor allele count \n";
-//	cerr << "\t\t--max-mac INT : maximum minor allele count \n";
+	cerr << "\tvariant filtering\n";
+	cerr << "\t\t--mac INT : minimum minor allele count \n";
+	cerr << "\t\t--max-mac INT : maximum minor allele count \n";
 	cerr << "\tindividual filtering\n";
-	cerr << "\t\t--keep-ids STR : file containing IDs of individuals to include\n";
-	cerr << "\t\t--excl-ids STR : file containing IDs of individuals to include\n";
+	cerr << "\t\t--include STR : one-column file of individual IDs to include\n";
+	cerr << "\t\t--exclude STR : one-column file of individual IDs to exclude\n";
 
     //  cerr << "\t\t--nmax INT : LD precision parameter (default: 5000)\n\n";
 }
@@ -94,8 +94,8 @@ int main (int argc, char *argv[]){
 	{"snp",    required_argument, NULL,  's' },
 	{"rsid",    required_argument, NULL,  'd' },
 	{"nmax",    required_argument, NULL,  'n' },
-	{"keep-ids",      required_argument,  NULL,  'k' },
-	{"excl-ids",      required_argument,  NULL,  'v' },
+	{"include",      required_argument,  NULL,  'k' },
+	{"exclude",      required_argument,  NULL,  'v' },
 	{"mac",      required_argument,  NULL,  'f' },
 	{"max-mac",      required_argument,  NULL,  'a' },
 	{"extra",    no_argument, NULL,  'e' },

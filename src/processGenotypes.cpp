@@ -50,7 +50,7 @@ bool idata::process(string input){
 		}
 //		cout << "Processing VCF IIDs ... \n";
 		while(iss >> id){
-//			cout << "\t" << id << "\t" << keep(id) << "\n";
+			//cout << "\t" << id << "\t" << keep(id) << "\n";
 			kcols.push_back(keep(id));
 		}
 	}
@@ -59,7 +59,8 @@ bool idata::process(string input){
 
 bool idata::keep( string id ){
 	if( filter_mode ){
-		if( ids.count(id) > 0 ){
+		//cout << id << "\t" << id.substr(0, id.find("_HAP_")) << "\n";
+		if( ids.count(id.substr(0, id.find("_HAP_") ) ) > 0 ){
 			if( keep_mode ){
 				return true;
 			}else{
@@ -100,7 +101,7 @@ void idata::open(string idpath, bool kmode){
 		string id;
 		while( idfile >> id ){
 //			cout << "\t" << id << "\n";
-			ids.insert(id);
+			ids.insert(id.substr(0, id.find("_HAP_")));
 		}
 		idfile.close();
 	}
@@ -126,7 +127,6 @@ string asRegion (int chr, int pos, int end){
 	string out = to_string(chr) + ":" + to_string(pos) + "-" + to_string(end);
 	return out;
 }
-
 
 int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &one_vs_all, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps){
 	
