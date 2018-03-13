@@ -154,6 +154,8 @@ int main (int argc, char *argv[]){
 
 	int n_haps;
 	
+	setThresh(min_print);
+	
 	if(target.chrpos != ""){
 		vector<string> region_v = getRegion(target.chrpos);
 		if( region_v.size() < 2 ){
@@ -213,7 +215,7 @@ int main (int argc, char *argv[]){
 		cerr << "\n\t-i input file not specified...\n";
 	//	cerr << "\tspecify --stdin or -i STDIN to read from stdin\n";
 		cerr << "\n\tuse --help to see more options\n\n";
-		//    print_usage();
+	//	print_usage();
 		return 1;
 	}else if(infile.length() > 1){
 		if( access( infile.c_str(), F_OK ) == -1 ){
@@ -259,7 +261,7 @@ int main (int argc, char *argv[]){
 			pstdout = 1;
 		}
 	}
-
+	
 	int m3vcf = -1;
 	if( infile.find("m3vcf") != string::npos ){
 		m3vcf = 1;
@@ -272,7 +274,7 @@ int main (int argc, char *argv[]){
 	//if( region_mode > 0 && pstdin < 0 ){
 	//	use_tabix = 1;
 	//}
-
+	
 	if( m3vcf < 0 ){
 		if( read_tabixed_vcf(infile, region, region_mode, one_vs_all, target, gdat, sinfo, idat, n_haps, fopts) > 0 ){
 			cerr << "\nERROR: check vcf file " << infile << "\n";
@@ -307,7 +309,7 @@ int main (int argc, char *argv[]){
 	cerr << "\nprocessed genotype data for " << n_haps << " haplotypes...\n";
 	cerr << "\ncalculating LD for " << gdat.genotypes.size() << " SNPs...\n\n";
 	
-	//ifclose(inStream);
+	// ifclose(inStream);
 	
 	uniform_real_distribution<double> unif(0,1);
 	default_random_engine re;
@@ -345,23 +347,25 @@ int main (int argc, char *argv[]){
 				}else{
 					corr(r, d, dprime, gdat.carriers[i], gdat.carriers[target.index], gdat.genotypes[i], gdat.genotypes[target.index], n_haps, gdat.dir[i], gdat.dir[target.index], max_sample, vunif );
 				}
-				if(extra > 0){
-					//fprintf (outf,"%u\t", sinfo.chr[i]);
-					fprintf (outf,"%s\t", sinfo.chr[i].c_str());
-					fprintf (outf,"%u\t", target.pos);
-					string outl = target.rsid + "\t" + target.ref + ":" + target.alt + "\t";
-					fprintf (outf,"%s",outl.c_str());
-					fprintf (outf,"%u\t", sinfo.pos[i]);
-					outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
-					fprintf (outf,"%s",outl.c_str());
-				}else{
-					//fprintf (outf,"%u\t%u\t%u\t",sinfo.chr[i], target.pos, sinfo.pos[i]);
-					fprintf (outf,"%s\t%u\t%u\t",sinfo.chr[i].c_str(), target.pos, sinfo.pos[i]);
-				}
-				if(extrastats > 0 ){
-					fprintf (outf,"%.5f\t%.5f\t%.5f\t%.5f\n", r, pow(r,2), d, dprime );
-				}else{
-					fprintf (outf,"%.5f\t%.5f\n", r, pow(r,2) );
+				if(  abs(r) > min_print  ){
+					if(extra > 0){
+						//fprintf (outf,"%u\t", sinfo.chr[i]);
+						fprintf (outf,"%s\t", sinfo.chr[i].c_str());
+						fprintf (outf,"%u\t", target.pos);
+						string outl = target.rsid + "\t" + target.ref + ":" + target.alt + "\t";
+						fprintf (outf,"%s",outl.c_str());
+						fprintf (outf,"%u\t", sinfo.pos[i]);
+						outl = sinfo.rsid[i] + "\t" + sinfo.ref[i] + ":" + sinfo.alt[i] + "\t";
+						fprintf (outf,"%s",outl.c_str());
+					}else{
+						//fprintf (outf,"%u\t%u\t%u\t",sinfo.chr[i], target.pos, sinfo.pos[i]);
+						fprintf (outf,"%s\t%u\t%u\t",sinfo.chr[i].c_str(), target.pos, sinfo.pos[i]);
+					}
+					if(extrastats > 0 ){
+						fprintf (outf,"%.5f\t%.5f\t%.5f\t%.5f\n", r, pow(r,2), d, dprime );
+					}else{
+						fprintf (outf,"%.5f\t%.5f\n", r, pow(r,2) );
+					}
 				}
 			}
 		}

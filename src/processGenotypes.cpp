@@ -236,7 +236,7 @@ int read_tabixed_vcf(string &vcf_path, string &region, int &region_mode, int &on
 					}
 					ii++;
 				}
-				if( (n1 >= fopts.min_mac || n0 >= fopts.min_mac) && (n1 <= fopts.max_mac || n0 <= fopts.max_mac) ){
+				if( min(n1, n0) >= fopts.min_mac && max(n1, n0) <= fopts.max_mac ){
 					sinfo.push(chr, pos, rsid, ref, alt);
 					if( n1 < n0 ){
 						gdat.push( id_1, genov, 1, n1, k );
@@ -390,7 +390,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, string &region, int &region_mode, int
 							n1++;
 						}
 					}
-					if( (n1 >= fopts.min_mac || n0 >= fopts.min_mac) && (n1 <= fopts.max_mac || n0 <= fopts.max_mac) ){
+					if( min(n1, n0) >= fopts.min_mac && max(n1, n0) <= fopts.max_mac ){
 						sinfo.push(chr, pos, rsid, ref, alt);
 						if( n1 < n0 ){
 							gdat.push( id_1, genov, 1, n1, N_B );

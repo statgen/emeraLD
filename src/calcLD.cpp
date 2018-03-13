@@ -3,6 +3,12 @@
 
 using namespace std;
 
+double THRESH;
+
+void setThresh(double &p){
+	THRESH = p;
+}
+
 double sizeIntersection(vector<int> &iid1, double &mac1, vector<bool> &genotypes2, int &n, int &maxmac, vector<double> &runif ){
     double out = 0;
     if( mac1 > maxmac && maxmac > 0 ){
@@ -29,14 +35,21 @@ void corr (double &R, double &D, double &DPRIME, vector<int> &G1, vector<int> &G
     double SS1 = G1.size(); double SS2 = G2.size();
     if( N == 0 || SS1 == 0 || SS2 == 0 || SS1 == N || SS2 == N ){
        	R = 0;
-		D = 0; 
-		DPRIME = 0;
-		return;
+	D = 0; 
+	DPRIME = 0;
+	return;
     }
     
     double EG1 = SS1 / N;
     double EG2 = SS2 / N;
     double E12;
+    
+    if( max( EG1 * (1-EG2) / ((1-EG1)*EG2), EG2 * (1-EG1) / ((1-EG2)*EG1) ) < THRESH ){
+    	R = 0;
+    	D = 0;
+    	DPRIME = 0;
+    	return;
+    }
     
     if( SS1 < SS2 ){
         E12 = sizeIntersection(G1, SS1, geno2, N, mmax, uvec);

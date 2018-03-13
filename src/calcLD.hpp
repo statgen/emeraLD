@@ -6,6 +6,8 @@
 
 using namespace std;
 
+void setThresh( double &p);
+
 double sizeIntersection(vector<int> &iid1, double &mac1, vector<bool> &genotypes2, int &n, int &maxmac, vector<double> &runif );
 
 void corr (double &R, double &D, double &DPRIME, vector<int> &G1, vector<int> &G2, vector<bool> &geno1, vector<bool> &geno2, int &N, int &D1, int &D2, int mmax, vector<double> &uvec );
