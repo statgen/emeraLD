@@ -100,8 +100,8 @@ void gdata::push (vector<uint_fast8_t>g,vector<int>ht,vector<int>hm,double p0, d
 		homs_ss.push_back(hm);
 	}
 	ugenos.push_back(g);
-	hets.push_back(ht);
-	homs.push_back(hm);
+//	hets.push_back(ht);
+//	homs.push_back(hm);
 	gprob gp;
 	gp.p0 = p0;
 	gp.p1 = p1;

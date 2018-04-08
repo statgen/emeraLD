@@ -147,7 +147,7 @@ void corr_within (double &R, double &D, double &DPRIME, vector<int> &idx_i, vect
 }
 
 void corr_unph (double &R, double &D, double &DPRIME, int i, int j, gdata& GDATA) {
-	if( GDATA.mac[i] > GDATA.mac[j] ){
+	if( GDATA.p_gts[i].p1 + GDATA.p_gts[i].p2 > GDATA.p_gts[j].p1 + GDATA.p_gts[j].p2 ){
 		int i_orig = i;
 		i = j;
 		j = i_orig;
