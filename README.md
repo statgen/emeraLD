@@ -3,35 +3,24 @@ Tools for rapid on-the-fly LD calculation
 #### About
 - Exploits sparsity and haplotype structure to enable rapid LD calculation with massive data sets
 - Uses tabix indexes to support rapid querying of genomic regions
-- Supports VCF and M3VCF formats
+- Supports VCF (phased or unphased) and M3VCF formats
 - Provides easy-to-use R interface to avoid storing/precomputing LD. This can save space without compromising speed for GWAS analysis in R 
-- In data sets with 10Ks of samples, emeraLD is 100s-Ks of times faster than standard tools (e.g. VCFtools and RAREMETALWORKER) and 20-80 times faster than tools for custom genotype formats (e.g., m3vcftools and LDstore)
+- In data sets with 10Ks of samples, emeraLD is 100s-Ks of times faster than existing tools for VCF files
 #### Installing 
 ```bash
 git clone https://github.com/statgen/emeraLD.git  
 cd emeraLD  
-make cloneLib  
 make  
-```
-Or if libStatGen is already present,  
-```bash
-git clone https://github.com/statgen/emeraLD.git  
-cd emeraLD  
-make LIBSTATGEN_PATH=my/path/to/libStatGen  
 ```
 #### Usage 
 - Example usage from command line  
 ```bash
-# example usage for custom region:
-bin/emeraLD -i example/chr20.1KG.25K_m.m3vcf.gz --region 20:60479-438197 --stdout | bgzip -c > my_LD.txt.gz
+# example usage for calculating LD in a region:
+bin/emeraLD -i example/chr20.1KG.25K_m.m3vcf.gz --region 20:60479-438197 --stdout | bgzip -c > output.txt.gz
 
-# using --dstats flag to include D and D' statistics:
-bin/emeraLD -i example/chr20.1KG.25K_m.m3vcf.gz --region 20:60479-438197 --stdout --dstats | head
-```
 - Example usage from R interface (see emeraLD2R.r file) 
 ```R
-## use "$chr" when genotype files are separated by chromosome
-## "$chr" is automatically replaced when a region is specified
+## "$chr" functions as chromosome wildcard 
 in_path <- "example/chr$chr.1KG.25K_m.vcf.gz"
 
 ## emeraLD2R creates an LD retrieval function 
