@@ -5,7 +5,7 @@ using namespace std;
 foptions fopts;
 
 int m_pad = 100;
-int m_fold = 5;
+int m_fold = 2;
 
 int check_phase = 1;
 
@@ -72,7 +72,7 @@ vector<int> sampleVec(vector<int> &x, int &n){
 
 void gdata::push (vector<int> ca, vector<bool> ge, int di, int ma, int bl)
 {
-	carriers.push_back(ca);
+//	carriers.push_back(ca);
 	subsample.push_back(getSubset(ca,ma));
 	genotypes.push_back(ge);
 	dir.push_back(di);

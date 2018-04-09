@@ -359,7 +359,7 @@ int main (int argc, char *argv[]){
 					corr_within (r, d, dprime, hdat.map[i], hdat.map[target.index], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[target.index], n_haps , gdat.dir[i], gdat.dir[target.index]);
 				}else{
 					if( fopts.phased ){
-						corr(r, d, dprime, gdat.carriers[i], gdat.carriers[target.index], gdat.genotypes[i], gdat.genotypes[target.index], n_haps, gdat.dir[i], gdat.dir[target.index],  gdat.subsample[i], gdat.subsample[target.index] );
+						corr(r, d, dprime, gdat.mac[i], gdat.mac[target.index], gdat.genotypes[i], gdat.genotypes[target.index], n_haps, gdat.dir[i], gdat.dir[target.index],  gdat.subsample[i], gdat.subsample[target.index] );
 					}else{
 						corr_unph(r, d, dprime, i, target.index, gdat);
 					}
@@ -411,7 +411,7 @@ int main (int argc, char *argv[]){
 								corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps, gdat.dir[i], gdat.dir[j] );
 							}else{
 								if( fopts.phased ){
-									corr(r, d, dprime, gdat.carriers[i], gdat.carriers[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j],  gdat.subsample[i], gdat.subsample[j] );
+									corr(r, d, dprime, gdat.mac[i], gdat.mac[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j],  gdat.subsample[i], gdat.subsample[j] );
 								}else{
 									corr_unph(r, d, dprime, i, j, gdat);
 								}
@@ -447,7 +447,7 @@ int main (int argc, char *argv[]){
 						corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps, gdat.dir[i], gdat.dir[j] );
 					}else{
 						if( fopts.phased ){
-							corr(r, d, dprime, gdat.carriers[i], gdat.carriers[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j],  gdat.subsample[i], gdat.subsample[j] );
+							corr(r, d, dprime, gdat.mac[i], gdat.mac[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j],  gdat.subsample[i], gdat.subsample[j] );
 						}else{
 							corr_unph(r, d, dprime, i, j, gdat);
 						}

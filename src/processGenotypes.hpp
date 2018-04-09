@@ -74,13 +74,13 @@ struct gprob {
 class gdata
 {
 	public:
-	vector<vector<int>> carriers;
+//	vector<vector<int>> carriers;
 	vector<vector<int>> subsample;
 	vector<vector<bool>> genotypes;
 	vector<vector<uint_fast8_t>> ugenos;
-	vector<vector<int>> hets;
+//	vector<vector<int>> hets;
 	vector<vector<int>> hets_ss;
-	vector<vector<int>> homs;
+//	vector<vector<int>> homs;
 	vector<vector<int>> homs_ss;
 	vector<gprob> p_gts;
 	vector<int> dir;
