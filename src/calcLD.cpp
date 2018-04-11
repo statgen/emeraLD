@@ -5,6 +5,7 @@ using namespace std;
 
 double THRESH;
 int max_sample;
+int N;
 int phased;
 
 void setThresh(double &p){
@@ -19,7 +20,11 @@ void setPhased(int &p){
 	phased = p;
 }
 
-double sizeIntersection(int &mac1, vector<bool> &genotypes2, vector<int> &sid1 ){
+void setSize(int& n){
+	N = n;
+}
+
+double sizeIntersection(int &mac1, haploVec &genotypes2, vector<int> &sid1 ){
 	double out = 0;
 	double ms = min(mac1, max_sample);
 	for(int k = 0; k < ms; k++){
@@ -30,12 +35,36 @@ double sizeIntersection(int &mac1, vector<bool> &genotypes2, vector<int> &sid1 )
 	return (double) mac1 * (out/ms);
 }
 
-void corr (double &R, double &D, double &DPRIME, int &MAC1, int &MAC2, vector<bool> &geno1, vector<bool> &geno2, int &N, int &D1, int &D2, vector<int> &S1, vector<int> &S2 ) {
+void getDprime(double& d_prime, double& cov, double &pi, double &pj){
+	if( cov < 0 ){
+		if( pi * pj < (1-pi)*(1-pj)){
+			d_prime = abs(cov)/(pi * pj);
+			return;
+		}else{
+			d_prime = abs(cov)/((1-pi)*(1-pj));
+			return;
+		}
+	}else{
+		if( (1-pi) * pj < pi*(1-pj)){
+			d_prime = cov/((1-pi) * pj);
+			return;
+		}else{
+			d_prime = cov/(pi * (1-pj));
+			return;
+		}
+	}
+}
+
+bool isMonorph(int& MAC1, int& MAC2){
+	return ( min(MAC1, MAC2) <= 0 || max(MAC1, MAC2) >= N || N == 0 );
+}
+
+void corr (double &R, double &D, double &DPRIME, int &MAC1, int &MAC2, haploVec &geno1, haploVec &geno2, int &D1, int &D2, vector<int> &S1, vector<int> &S2 ) {
 	
-	if( N == 0 || MAC1 == 0 || MAC2 == 0 || MAC1 == N || MAC2 == N ){
-		R = 0;
-		D = 0;
-		DPRIME = 0;
+	if( isMonorph(MAC1, MAC2) ){
+		R = -99;
+		D = -99;
+		DPRIME = -99;
 		return;
 	}
 	
@@ -56,48 +85,37 @@ void corr (double &R, double &D, double &DPRIME, int &MAC1, int &MAC2, vector<bo
 		E12 = sizeIntersection(MAC2, geno1, S2)/N;
 	}
 	
-	double SD1 = sqrt(EG1)*sqrt(1 - EG1);
-	double SD2 = sqrt(EG2)*sqrt(1 - EG2);
-	double C12 = E12 - EG1*EG2;
+	double SD1 = sqrt(EG1*(1 - EG1));
+	double SD2 = sqrt(EG2*(1 - EG2));
+
+	R = 0;	
+	D = D1 * D2 * (E12 - EG1*EG2);
 	
-	R = 0;
-	
-	D = D1 * D2 * C12;
-	
-	if( D < 0 ){
-		if( EG1 * EG2 < (1-EG1)*(1-EG2)){
-			DPRIME = abs(D)/(EG1 * EG2);
-		}else{
-			DPRIME = abs(D)/((1-EG1)*(1-EG2));
-		}
-	}else{
-		if( (1-EG1) * EG2 < EG1*(1-EG2)){
-			DPRIME = D/((1-EG1) * EG2);
-		}else{
-			DPRIME = D/(EG1 * (1-EG2));
-		}
-	}
+	getDprime(DPRIME, D, EG1, EG2);
 	
 	if( SD1 * SD2 > 0 ){
-		R  = D / ( SD1 * SD2 );
+		R  = D / ( SD1 * SD2 );	
+		if( abs(R) > 1 ){
+			R = (R > 0) ? 1 : -1;
+		}
+	}else{
+		R = -99;
 	}
 	
-	if( abs(R) > 1 ){
-		R = (R > 0) ? 1 : -1;
-	}
+	return;
 }
 
-void corr_within (double &R, double &D, double &DPRIME, vector<int> &idx_i, vector<int> &idx_j, vector<int> &hac, int &m_i, int &m_j, int &n, int &D1, int &D2){
+void corr_within (double &R, double &D, double &DPRIME, vector<int> &idx_i, vector<int> &idx_j, vector<int> &hac, int &m_i, int &m_j, int &D1, int &D2){
 	
-	if( m_i == 0 || m_i == n || m_j == 0 || m_j == n ){
+	if( isMonorph(m_i, m_j) ){
 		R = 0;
 		D = 0;
 		DPRIME = 0;
 		return;
 	}
 	
-	double pi = m_i/(double)n;
-	double pj = m_j/(double)n;
+	double pi = m_i/(double)N;
+	double pj = m_j/(double)N;
 	double pij = 0;
 	int x_i = 0; int x_j = 0;
 	while(x_i < idx_i.size() && x_j < idx_j.size() ){
@@ -111,29 +129,13 @@ void corr_within (double &R, double &D, double &DPRIME, vector<int> &idx_i, vect
 			x_j++;
 		}
 	}
-	pij = pij / n;
-	if( pij > pi ){
-		pij = pi;
-	}
-	if( pij > pj ){
-		pij = pj;
-	}
+	pij /= N;
 	D = D1 * D2 * (pij - pi*pj );
 	R = D/sqrt(pi * (1- pi) * pj * (1 - pj));
 	
-	if( D < 0 ){
-		if( pi * pj < (1-pi)*(1-pj)){
-			DPRIME = abs(D)/(pi * pj);
-		}else{
-			DPRIME = abs(D)/((1-pi)*(1-pj));
-		}
-	}else{
-		if( (1-pi) * pj < pi*(1-pj)){
-			DPRIME = D/((1-pi) * pj);
-		}else{
-			DPRIME = D/(pi * (1-pj));
-		}
-	}
+	getDprime(DPRIME, D, pi, pj);	
+	
+	return;
 }
 
 void corr_unph (double &R, double &D, double &DPRIME, int i, int j, gdata& GDATA) {
@@ -174,5 +176,17 @@ void corr_unph (double &R, double &D, double &DPRIME, int i, int j, gdata& GDATA
 	D = GDATA.p_gts[i].p1*EGj_1 + 2*GDATA.p_gts[i].p2*EGj_2 - 4*p_i*p_j;
 	D *= GDATA.dir[i]*GDATA.dir[j];
 	R = D / ( s_i * s_j ); 
+}
+
+void getCorr(double &r, double &d, double &dprime, int &i, int &j, gdata& gdat, hdata& hdat){
+	if( gdat.block[i] == gdat.block[j] ){
+		corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], gdat.dir[i], gdat.dir[j]);
+	}else{
+		if( phased ){
+			corr(r, d, dprime, gdat.mac[i], gdat.mac[j], gdat.genotypes[i], gdat.genotypes[j], gdat.dir[i], gdat.dir[j],  gdat.subsample[i], gdat.subsample[j] );
+		}else{
+			corr_unph(r, d, dprime, i, j, gdat);
+		}
+	}
 }
 

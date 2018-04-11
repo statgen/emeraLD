@@ -68,6 +68,9 @@ int main (int argc, char *argv[]){
 	fopts.max_mac = 100000000;
 	fopts.min_mac = 1;
 	
+	fopts.m_fold = 0;
+	fopts.m_pad = 50;
+	
 	fopts.mmac = 1000;
 	fopts.max_sample = 1000;
 	
@@ -88,8 +91,6 @@ int main (int argc, char *argv[]){
 	help = matrix_out = one_vs_all = 0;
 	
 	int opt = 0;
-	
-	int wmin = 0;
 	
 	static struct option long_options[] = {
 		{"help",      no_argument,  &help,  1 },
@@ -112,10 +113,11 @@ int main (int argc, char *argv[]){
 		{"mac",       required_argument,  NULL,  'f' },
 		{"max-mac",   required_argument,  NULL,  'a' },
 		{"extra",     no_argument, &extra,  1 },
-		{"wmin",      required_argument, NULL,  'q' }
+		{"m-pad",     required_argument, NULL, 'b'},
+		{"m-fold",    required_argument, NULL, 'c'},
 	};
 	int long_index =0;
-	while ((opt = getopt_long(argc, argv,"i:o:w:r:t:s:d:n:k:v:f:a:q:?", long_options, &long_index )) != -1) {
+	while ((opt = getopt_long(argc, argv,"i:o:w:r:t:s:d:n:k:v:f:a:b:c:", long_options, &long_index )) != -1) {
 		switch (opt) {
 		case 'i' : infile = optarg;
 		break;
@@ -141,20 +143,20 @@ int main (int argc, char *argv[]){
 		break;
 		case 'a' : fopts.max_mac = atoi(optarg);
 		break;
-		case 'q' : wmin = atoi(optarg);
+		case 'b' : fopts.m_pad = atoi(optarg);
 		break;
-		case '?': input_error = 1; 
+		case 'c' : fopts.m_fold = atoi(optarg);
 		break;
 		}
 	}
 
 	int n_haps;
 	
-	if( input_error ){
+	/*if( input_error ){
 		cerr << "\nERROR: unrecognized command line argument\n\n";
 		cerr << "\nuse \"--help\" to see valid arguments and options\n\n";
 		return 1;
-	}
+	}*/
 	
 	if( pstdin ){
 		infile = "STDIN";
@@ -326,6 +328,9 @@ int main (int argc, char *argv[]){
 		return 1;
 	}
 	
+	setPhased(fopts.phased);
+	setSize(n_haps);
+	
 	cerr << "\nprocessed genotype data for " << n_haps << " " << unit << "...\n";
 	cerr << "\ncalculating LD for " << gdat.mac.size() << " SNPs...\n\n";
 	
@@ -355,15 +360,7 @@ int main (int argc, char *argv[]){
 		
 		for (int i = 0; i < sinfo.size(); i++) {
 			if( abs(target.pos - sinfo.pos[i]) < max_dist && sinfo.pos[i] != target.pos ){
-				if( gdat.block[i] == gdat.block[target.index] && gdat.mac[i] > wmin && gdat.mac[target.index] > wmin){
-					corr_within (r, d, dprime, hdat.map[i], hdat.map[target.index], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[target.index], n_haps , gdat.dir[i], gdat.dir[target.index]);
-				}else{
-					if( fopts.phased ){
-						corr(r, d, dprime, gdat.mac[i], gdat.mac[target.index], gdat.genotypes[i], gdat.genotypes[target.index], n_haps, gdat.dir[i], gdat.dir[target.index],  gdat.subsample[i], gdat.subsample[target.index] );
-					}else{
-						corr_unph(r, d, dprime, i, target.index, gdat);
-					}
-				}
+				getCorr(r, d, dprime, i, target.index, gdat, hdat);
 				if(  abs(r) > min_print  ){
 					if( extra ){
 						//fprintf (outf,"%u\t", sinfo.chr[i]);
@@ -407,15 +404,7 @@ int main (int argc, char *argv[]){
 						if( i == j ){
 							r = 1;
 						}else if( abs(sinfo.pos[i]-sinfo.pos[j]) < max_dist ){
-							if( gdat.block[i] == gdat.block[j] && gdat.mac[i] > wmin && gdat.mac[j] > wmin ){
-								corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps, gdat.dir[i], gdat.dir[j] );
-							}else{
-								if( fopts.phased ){
-									corr(r, d, dprime, gdat.mac[i], gdat.mac[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j],  gdat.subsample[i], gdat.subsample[j] );
-								}else{
-									corr_unph(r, d, dprime, i, j, gdat);
-								}
-							}
+							getCorr(r, d, dprime, i, j, gdat, hdat);
 						}
 						if( j == sinfo.size()-1 ){
 							fprintf (outf, "%.5f\n", r);
@@ -443,15 +432,7 @@ int main (int argc, char *argv[]){
 		for (int i = 0; i < sinfo.size() - 1; i++) {
 			for (int j = i + 1; j < sinfo.size(); j++) {
 				if( abs((sinfo.pos[i])-(sinfo.pos[j])) < max_dist && (sinfo.pos[i] < sinfo.pos[j] || sinfo.rsid[i]!=sinfo.rsid[j] ) ){
-					if( gdat.block[i] == gdat.block[j] && gdat.mac[i] > wmin && gdat.mac[j] > wmin ){
-						corr_within (r, d, dprime, hdat.map[i], hdat.map[j], hdat.hcts[gdat.block[i]], gdat.mac[i], gdat.mac[j], n_haps, gdat.dir[i], gdat.dir[j] );
-					}else{
-						if( fopts.phased ){
-							corr(r, d, dprime, gdat.mac[i], gdat.mac[j], gdat.genotypes[i], gdat.genotypes[j], n_haps, gdat.dir[i], gdat.dir[j],  gdat.subsample[i], gdat.subsample[j] );
-						}else{
-							corr_unph(r, d, dprime, i, j, gdat);
-						}
-					}
+					getCorr(r, d, dprime, i, j, gdat, hdat);
 					if( abs(r) > min_print ){
 						if( extra ){
 							//fprintf (outf, "%u\t", sinfo.chr[i]);

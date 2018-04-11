@@ -4,10 +4,9 @@ using namespace std;
 
 foptions fopts;
 
-int m_pad = 100;
-int m_fold = 2;
-
 int check_phase = 1;
+
+int N_HAPS = 0;
 
 uniform_real_distribution<double> unif(0,1);
 random_device rd;
@@ -16,6 +15,59 @@ default_random_engine re(rd());
 void setOptions(foptions in)
 {
 	fopts = in;
+}
+
+//diploVec::diploVec(int n){
+//	g.resize(2*n, false);
+//}
+
+void diploVec::resize(int n){
+        g.resize(2*n);
+}
+
+void diploVec::push_back(int i){
+	switch(i){
+		case 0: 
+			g.push_back(false);
+			g.push_back(false);
+			break;
+		case 1:
+			g.push_back(true);
+			g.push_back(false);
+			break;
+		case 2:
+			g.push_back(true);
+			g.push_back(true);
+			break;	
+	}
+	return;
+}
+
+void diploVec::assign(int val, int index){
+	switch(val){
+		case 0:
+			g[2*index] = false;
+			g[2*index+1] = false;
+			break;
+		case 1:
+			g[2*index] = true;
+			g[2*index+1] = false;
+			break;
+		case 2:
+			g[2*index] = true;
+			g[2*index+1] = true;
+			break;
+	}
+	return;
+}
+
+unsigned int diploVec::size(){
+	return g.size()/2;
+}
+
+void diploVec::flip(){
+	g.flip();
+	return;
 }
 
 void snpinfo::push(string ch, int po, string rs, string rf, string al)
@@ -32,13 +84,13 @@ unsigned int snpinfo::size()  {
 }
 
 vector<int> getSubset(vector<int> &x, int &mac){
-	if( mac > fopts.mmac + m_pad && fopts.mmac > 1 ){
+	if( mac > fopts.mmac + fopts.m_pad && fopts.mmac > 1 ){
 		vector<int> out;
-		if( mac > m_fold*fopts.mmac ){
+		if( mac > fopts.m_fold*fopts.mmac ){
+			out.resize(fopts.mmac);
 			for(int k = 0; k < fopts.mmac; k++){
-				out.push_back(x[ (int) ( unif(re)*(mac-1)+0.5) ]);
+				out[k] = x[ (int) ( unif(re)*(mac-1)+0.5) ];
 			}
-			sort(out.begin(), out.end());
 		}else{
 			out = x;
 			shuffle ( out.begin(), out.end(), re );
@@ -52,11 +104,12 @@ vector<int> getSubset(vector<int> &x, int &mac){
 }
 
 vector<int> sampleVec(vector<int> &x, int &n){
-	if( x.size() > n + m_pad ){
+	if( x.size() > n + fopts.m_pad ){
 		vector<int> out;
-		if( x.size() > m_fold*n ){
+		if( x.size() > fopts.m_fold*n ){
+			out.resize(n);
 			for(int k = 0; k < n; k++){
-				out.push_back(x[ (int) ( unif(re)*(n-1)+0.5) ]);
+				out[k] = x[ (int) ( unif(re)*(n-1)+0.5) ];
 			}
 		}else{
 			out = x;
@@ -70,7 +123,7 @@ vector<int> sampleVec(vector<int> &x, int &n){
 	}
 }
 
-void gdata::push (vector<int> ca, vector<bool> ge, int di, int ma, int bl)
+void gdata::push (vector<int> ca, haploVec ge, int di, int ma, int bl)
 {
 //	carriers.push_back(ca);
 	subsample.push_back(getSubset(ca,ma));
@@ -81,16 +134,13 @@ void gdata::push (vector<int> ca, vector<bool> ge, int di, int ma, int bl)
 }
 
 
-void gdata::push (vector<uint_fast8_t>g,vector<int>ht,vector<int>hm,double p0, double p1, double p2, int d, int m, int bl)
+void gdata::push (diploVec g,vector<int>ht,vector<int>hm,double p0, double p1, double p2, int d, int m, int bl)
 {
 	double pt = p0 + p1 + p2;
 	p0 /= pt;
 	p1 /= pt;
 	p2 /= pt;
-	for(int k = 0; k < hm.size(); k++){
-		g[hm[k]] = 2;
-	}
-	if( ht.size() + hm.size() + m_pad > fopts.mmac && fopts.mmac > 1 ){
+	if( ht.size() + hm.size() + fopts.m_pad > fopts.mmac && fopts.mmac > 1 ){
 		int n2 = (int)( fopts.mmac*(2*p2)/(2*p2+p1) +0.5f);
 		int n1 = fopts.mmac - n2;
 		hets_ss.push_back(sampleVec(ht, n1));
@@ -126,7 +176,7 @@ void hdata::push_map (vector<int> ma)
 }
 
 bool idata::process(string input){
-	if( filter_mode ){
+//	if( filter_mode ){
 		Tabix tfile(input);
 		string header;
 		tfile.getHeader(header);
@@ -140,9 +190,13 @@ bool idata::process(string input){
 		//		cout << "Processing VCF IIDs ... \n";
 		while(iss >> id){
 			//cout << "\t" << id << "\t" << keep(id) << "\n";
-			kcols.push_back(keep(id));
+			bool kp = keep(id);
+			if(kp){
+				N_HAPS++;
+			}
+			kcols.push_back(kp);
 		}
-	}
+//	}
 	return true;
 }
 
@@ -278,14 +332,20 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 			int pos;
 			n = n1 = n0 = 0;
 			vector<int> id_0, id_1;
-			vector<bool> genov;
+			haploVec genov;
 			
 			double p0, p1, p2;
 			p0 = p1 = p2 = 0;
-			vector<uint_fast8_t> ug;
+			diploVec ug;
 			vector<int> ht;
 			vector<int> hm0;
 			vector<int> hm2;
+			
+			if( fopts.phased & !check_phase ){
+				genov.resize(N_HAPS);
+			}else{
+				ug.resize(N_HAPS);				
+			}
 			
 			istringstream iss(line);
 			
@@ -327,7 +387,14 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 									cerr << "      use \"--phased\" option to override this behaviour\n";
 									ph = 1;
 									fopts.phased = 1;
+									ug.resize(N_HAPS);
+								}else{
+									N_HAPS *= 2;
+									genov.resize(N_HAPS);
 								}
+							}else{
+								N_HAPS *= 2;
+								genov.resize(N_HAPS);
 							}
 							check_phase = 0;
 						}
@@ -335,12 +402,12 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 							for (int idx = 0; idx < 3; idx += 2){
 								if( geno[idx] == '0' ){
 									id_0.push_back(n);
-									genov.push_back(false);
+									genov[n] = false;
 									n0++;
 									n++;
 								}else if( geno[idx] == '1' ){
 									id_1.push_back(n);
-									genov.push_back(true);
+									genov[n] = true;
 									n1++;
 									n++;
 								}
@@ -348,20 +415,20 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 						}else{
 							if( geno[0]=='0' && geno[2]=='0' ){
 								hm0.push_back(n);
-								ug.push_back(0);
+								ug.assign(0,n);
 								p0++;
 								n++;
 								n0 += 2;
 							}else if( ( geno[0]=='0' && geno[2]=='1' )  || ( geno[0]=='1' && geno[2]=='0' ) ){
 								ht.push_back(n);
-								ug.push_back(1);
+								ug.assign(1,n);
 								p1++;
 								n++;
 								n0 += 1;
 								n1 += 1;
 							}else if( geno[0]=='1' && geno[2]=='1' ){
 								hm2.push_back(n);
-								ug.push_back(0);
+								ug.assign(2,n);
 								p2++;
 								n++;
 								n1 += 2;
@@ -383,6 +450,7 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 						if( hm2.size() < hm0.size() ){
 							gdat.push(ug, ht, hm2, p0, p1, p2,  1, 2*p2 + p1, k);
 						}else{
+							ug.flip();
 							gdat.push(ug, ht, hm0, p2, p1, p0, -1, 2*p0 + p1, k);
 						}
 					}
@@ -427,7 +495,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 	
 	string line;
 	
-	vector<int> h_iid;
+	vector<int> h_iid(N_HAPS);
 	vector<int> h_cts;
 	int m_block = 0;
 	int begun = 0;
@@ -448,7 +516,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 			int pos, n1, n0;
 			n1 = n0 = 0;
 			vector<int> id_0, id_1;
-			vector<bool> genov;
+			haploVec genov(N_HAPS);
 			vector<int> h_map;
 			
 			if( line.find("BLOCK") != string::npos ){
@@ -458,7 +526,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 					m_block = 0;
 					hdat.push_block(h_iid, h_cts, h_cts.size());
 				}
-				h_iid.clear();
+				//h_iid.clear();
 				h_cts.clear();
 				istringstream iss(line);
 				string tmp;
@@ -479,7 +547,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 						if(genotype > max_h ){
 							max_h = genotype;
 						}
-						h_iid.push_back(genotype);
+						h_iid[ni] = genotype;
 						n_haps++;
 					}
 					ii++;
@@ -527,11 +595,11 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 					for( int i = 0; i < h_iid.size(); i++ ){
 						if(  binary_search( positives.begin(), positives.end(), h_iid[i] ) ){
 							id_0.push_back(i);
-							genov.push_back(false);
+							genov[i] = false;
 							n0++;
 						}else{
 							id_1.push_back(i);
-							genov.push_back(true);
+							genov[i]  = true;
 							n1++;
 						}
 					}

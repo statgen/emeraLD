@@ -12,8 +12,31 @@
 #define PROCGENO_H
 
 #include "tabix_util/tabix.hpp"
+#include "boost/dynamic_bitset.hpp"
 
 using namespace std;
+
+typedef boost::dynamic_bitset<> haploVec;
+
+class diploVec
+{
+	public:
+	haploVec g;
+	int operator[] (int& x) {
+		if( g[2*x] ){
+			return ( g[2*x + 1] ? 2 : 1 );
+		}else{
+			return ( g[2*x + 1] ? 1 : 0 );
+		}
+	}
+//	diploVec() : {};
+//	diploVec(int);
+	void resize (int);
+	void assign(int, int);
+	void push_back (int);
+	unsigned int size();
+	void flip();
+};
 
 class snpinfo
 {
@@ -31,7 +54,7 @@ class idata
 {
 	public:
 	unordered_set<string> ids;
-	vector<bool> kcols;
+	haploVec kcols;
 	bool filter_mode;
 	bool keep_mode;
 	bool keep(string);
@@ -76,8 +99,8 @@ class gdata
 	public:
 //	vector<vector<int>> carriers;
 	vector<vector<int>> subsample;
-	vector<vector<bool>> genotypes;
-	vector<vector<uint_fast8_t>> ugenos;
+	vector<haploVec> genotypes;
+	vector<diploVec> ugenos;
 //	vector<vector<int>> hets;
 	vector<vector<int>> hets_ss;
 //	vector<vector<int>> homs;
@@ -86,8 +109,8 @@ class gdata
 	vector<int> dir;
 	vector<int> mac;
 	vector<int> block;
-	void push (vector<int>, vector<bool>, int, int, int);
-	void push (vector<uint_fast8_t>,vector<int>,vector<int>,double,double,double,int,int,int);
+	void push (vector<int>, haploVec, int, int, int);
+	void push (diploVec,vector<int>,vector<int>,double,double,double,int,int,int);
 };
 
 class foptions
@@ -105,6 +128,8 @@ class foptions
 	int one_vs_all;
 	int phased;
 	int force_phased;
+	int m_pad;
+	int m_fold;
 	double qual;
 };
 
