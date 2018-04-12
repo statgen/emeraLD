@@ -16,9 +16,9 @@
 
 using namespace std;
 
-typedef boost::dynamic_bitset<> haploVec;
+// typedef boost::dynamic_bitset<> haploVec;
 
-// typedef vector<bool> haploVec;
+typedef vector<bool> haploVec;
 
 class diploVec
 {
@@ -33,8 +33,9 @@ class diploVec
 	}
 //	diploVec() : {};
 //	diploVec(int);
-	void resize (int);
-	void assign(int, int);
+	void resize (int&);
+	void reserve (int&);
+	void assign(int, int&);
 	void push_back (int);
 	unsigned int size();
 	void flip();
@@ -49,7 +50,7 @@ class snpinfo
 	vector<string> ref;
 	vector<string> alt;
 	unsigned int size() ;
-	void push (string, int, string, string, string) ;
+	void push (string&, int&, string&, string&, string&);
 };
 
 class idata
@@ -59,10 +60,10 @@ class idata
 	haploVec kcols;
 	bool filter_mode;
 	bool keep_mode;
-	bool keep(string);
+	bool keep(string&);
 	bool keep(int);
-	bool process(string);
-	void open(string, bool);
+	bool process(string&);
+	void open(string&, bool);
 };
 
 class targetinfo
@@ -86,8 +87,8 @@ class hdata
 	vector<vector<int>> hcts;
 	vector<int> nhap;
 	vector<vector<int>> map;
-	void push_block (vector<int>, vector<int>, int) ;
-	void push_map (vector<int>) ;
+	void push_block (vector<int>&, vector<int>&, int) ;
+	void push_map (vector<int>&);
 };
 
 struct gprob {
@@ -111,8 +112,8 @@ class gdata
 	vector<int> dir;
 	vector<int> mac;
 	vector<int> block;
-	void push (vector<int>, haploVec, int, int, int);
-	void push (diploVec,vector<int>,vector<int>,double,double,double,int,int,int);
+	void push (vector<int>&, haploVec&, int, int, int);
+	void push (diploVec&,vector<int>&,vector<int>&,double&,double&,double&,int,int,int);
 };
 
 class foptions
