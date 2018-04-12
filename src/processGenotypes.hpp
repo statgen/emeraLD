@@ -18,6 +18,8 @@ using namespace std;
 
 typedef boost::dynamic_bitset<> haploVec;
 
+// typedef vector<bool> haploVec;
+
 class diploVec
 {
 	public:

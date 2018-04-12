@@ -5,7 +5,7 @@ Tools for rapid on-the-fly LD calculation
 - Uses tabix indexes to support rapid querying of genomic regions
 - Supports VCF (phased or unphased) and M3VCF formats
 - Provides easy-to-use R interface to avoid storing/precomputing LD. This can save space without compromising speed for GWAS analysis in R 
-- In data sets with 10Ks of samples, emeraLD is 100s-Ks of times faster than existing tools for VCF files
+- In data sets with 10Ks of samples, emeraLD is 5-20x faster than PLINK-1.9 and 100s-Ks of times faster than existing tools for VCF files
 #### Installing 
 ```bash
 git clone https://github.com/statgen/emeraLD.git  

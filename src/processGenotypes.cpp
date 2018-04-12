@@ -194,7 +194,9 @@ bool idata::process(string input){
 			if(kp){
 				N_HAPS++;
 			}
-			kcols.push_back(kp);
+			if( filter_mode ){
+				kcols.push_back(kp);
+			}
 		}
 //	}
 	return true;
@@ -495,7 +497,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 	
 	string line;
 	
-	vector<int> h_iid(N_HAPS);
+	vector<int> h_iid;
 	vector<int> h_cts;
 	int m_block = 0;
 	int begun = 0;
@@ -516,7 +518,8 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 			int pos, n1, n0;
 			n1 = n0 = 0;
 			vector<int> id_0, id_1;
-			haploVec genov(N_HAPS);
+			haploVec genov;
+			genov.resize(N_HAPS);
 			vector<int> h_map;
 			
 			if( line.find("BLOCK") != string::npos ){
@@ -526,7 +529,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 					m_block = 0;
 					hdat.push_block(h_iid, h_cts, h_cts.size());
 				}
-				//h_iid.clear();
+				h_iid.clear();
 				h_cts.clear();
 				istringstream iss(line);
 				string tmp;
@@ -547,7 +550,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 						if(genotype > max_h ){
 							max_h = genotype;
 						}
-						h_iid[ni] = genotype;
+						h_iid.push_back(genotype);
 						n_haps++;
 					}
 					ii++;
@@ -620,7 +623,7 @@ int read_tabixed_m3vcf(string &m3vcf_path, targetinfo &target, gdata &gdat, snpi
 				}
 			}
 		}
-		//line.clear();
+		line.clear();
 	}
 	if( m_block > 0 ){
 		hdat.push_block(h_iid, h_cts, h_cts.size());

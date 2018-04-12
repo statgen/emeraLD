@@ -93,7 +93,7 @@ int main (int argc, char *argv[]){
 	int opt = 0;
 	
 	static struct option long_options[] = {
-		{"help",      no_argument,  &help,  1 },
+		{"help",      no_argument,  &help,  1},
 		{"in",        required_argument,  NULL,  'i' },
 		{"stdin",     no_argument, &pstdin, 1},
 		{"out",       required_argument, NULL,  'o' },
@@ -115,48 +115,53 @@ int main (int argc, char *argv[]){
 		{"extra",     no_argument, &extra,  1 },
 		{"m-pad",     required_argument, NULL, 'b'},
 		{"m-fold",    required_argument, NULL, 'c'},
+		{NULL,        0,                 NULL,  0 }
 	};
-	int long_index =0;
-	while ((opt = getopt_long(argc, argv,"i:o:w:r:t:s:d:n:k:v:f:a:b:c:", long_options, &long_index )) != -1) {
+
+	while ((opt = getopt_long(argc, argv, "hi:o:w:t:s:r:n:k:v:f:a:b:c:", long_options, NULL)) != -1) {
 		switch (opt) {
-		case 'i' : infile = optarg;
-		break;
-		case 'o' : outfile = optarg;
-		break;
-		case 'w' : max_dist = atoi(optarg);
-		break;
-		case 't' : min_print = atof(optarg);
-		break;
-		case 's' : fopts.one_vs_all = 1; target.chrpos = optarg;
-		break;
-		case 'd' : fopts.one_vs_all = 1; target.rsid = optarg;
-		break;
-		case 'r' : fopts.region_mode = 1; fopts.region = optarg;
-		break;
-		case 'n' : fopts.max_sample = atoi(optarg); fopts.mmac = atoi(optarg);
-		break;
-		case 'k' : keepfile = optarg;
-		break;
-		case 'v' : exclfile = optarg;
-		break;
-		case 'f' : fopts.min_mac = atoi(optarg);
-		break;
-		case 'a' : fopts.max_mac = atoi(optarg);
-		break;
-		case 'b' : fopts.m_pad = atoi(optarg);
-		break;
-		case 'c' : fopts.m_fold = atoi(optarg);
-		break;
+			case 'i' : infile = optarg;
+				break;
+			case 'o' : outfile = optarg;
+				break;
+			case 'w' : max_dist = atoi(optarg);
+				break;
+			case 't' : min_print = atof(optarg);
+				break;
+			case 's' : fopts.one_vs_all = 1; target.chrpos = optarg;
+				break;
+			case 'd' : fopts.one_vs_all = 1; target.rsid = optarg;
+				break;
+			case 'r' : fopts.region_mode = 1; fopts.region = optarg;
+				break;
+			case 'n' : fopts.max_sample = atoi(optarg); fopts.mmac = atoi(optarg);
+				break;
+			case 'k' : keepfile = optarg;
+				break;
+			case 'v' : exclfile = optarg;
+				break;
+			case 'f' : fopts.min_mac = atoi(optarg);
+				break;
+			case 'a' : fopts.max_mac = atoi(optarg);
+				break;
+			case 'b' : fopts.m_pad = atoi(optarg);
+				break;
+			case 'c' : fopts.m_fold = atoi(optarg);
+				break;
+			case '?' : input_error++;
 		}
 	}
 
-	int n_haps;
-	
-	/*if( input_error ){
+        if( help ){
+		print_usage();
+        	return 0;
+        }
+        
+	if( input_error ){
 		cerr << "\nERROR: unrecognized command line argument\n\n";
 		cerr << "\nuse \"--help\" to see valid arguments and options\n\n";
 		return 1;
-	}*/
+	}
 	
 	if( pstdin ){
 		infile = "STDIN";
@@ -165,6 +170,8 @@ int main (int argc, char *argv[]){
 		outfile = "STDOUT";
 	}
 	
+	int n_haps;
+
 	setThresh(min_print);
 	setMaxSample(fopts.max_sample);
 	setPhased(fopts.phased);
@@ -188,6 +195,33 @@ int main (int argc, char *argv[]){
 		}
 	}else{
 		idat.open(exclfile, false);
+	}
+	
+	if( infile.length() <= 1 && !pstdin ){
+		cerr << "\n\t-i input file not specified...\n";
+		//	cerr << "\tspecify --stdin or -i STDIN to read from stdin\n";
+		cerr << "\n\tuse --help to see more options\n\n";
+		//	print_usage();
+		return 1;
+	}else if( infile.length() > 1 ){
+		if( access( infile.c_str(), F_OK ) == -1 ){
+			cerr << "\nERROR: input file '" << infile << "' does not exist...\n\n";
+			return 1;
+		}
+		string infile_tbi = infile + ".tbi";
+		if( access( infile_tbi.c_str(), F_OK ) == -1 ){
+			cerr << "\nERROR: index file '" << infile_tbi << "' does not exist...\n";
+			cerr << "\n\temeraLD requires bgzipped & tabixed input files";
+			cerr << "\n\tuse 'tabix -p vcf " << infile << "' to generate index\n\n";
+			return 1;
+		}
+	}
+	
+	if( infile.length() > 1 && pstdin && infile != "STDIN" && infile != "-"){
+		cerr << "\nERROR: choose either --infile [" << infile << "] or --stdin, but not both \n";
+		cerr << "\n\tuse --help to see more options\n\n";
+		//    print_usage();
+		return 1;
 	}
 	
 	idat.process(infile);
@@ -214,38 +248,6 @@ int main (int argc, char *argv[]){
 	
 	if( matrix_out && one_vs_all ){
 		cerr << "\n\t--matrix cannot be used with --rsid or --snp\n";
-		cerr << "\n\tuse --help to see more options\n\n";
-		//    print_usage();
-		return 1;
-	}
-	
-	if( help ){
-		print_usage();
-		return 0;
-	}
-	
-	if( infile.length() < 1 && !pstdin ){
-		cerr << "\n\t-i input file not specified...\n";
-		//	cerr << "\tspecify --stdin or -i STDIN to read from stdin\n";
-		cerr << "\n\tuse --help to see more options\n\n";
-		//	print_usage();
-		return 1;
-	}else if(infile.length() > 1){
-		if( access( infile.c_str(), F_OK ) == -1 ){
-			cerr << "\nERROR: input file '" << infile << "' does not exist...\n\n";
-			return 1;
-		}
-		string infile_tbi = infile + ".tbi";
-		if( access( infile_tbi.c_str(), F_OK ) == -1 ){
-			cerr << "\nERROR: index file '" << infile_tbi << "' does not exist...\n";
-			cerr << "\n\temeraLD requires bgzipped & tabixed input files";
-			cerr << "\n\tuse 'tabix -p vcf " << infile << "' to generate index\n\n";
-			return 1;
-		}
-	}
-	
-	if( infile.length() > 1 && pstdin && infile != "STDIN" && infile != "-"){
-		cerr << "\nERROR: choose either --infile [" << infile << "] or --stdin, but not both \n";
 		cerr << "\n\tuse --help to see more options\n\n";
 		//    print_usage();
 		return 1;
