@@ -5,6 +5,8 @@
 #include "tabix.h"
 #include <iostream>
 
+#ifndef TABIXPP_H
+#define TABIXPP_H
 
 using namespace std;
 
@@ -29,3 +31,5 @@ public:
     bool getNextLine(string& line);
 
 };
+
+#endif /* TABIXPP_H */

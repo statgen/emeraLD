@@ -8,33 +8,34 @@
 #include <stdio.h>
 #include <unordered_set>
 
-#ifndef PROCGENO_H
-#define PROCGENO_H
-
 #include "tabix_util/tabix.hpp"
 #include "boost/dynamic_bitset.hpp"
 
+#ifndef PROCGENO_H
+#define PROCGENO_H
+
 using namespace std;
 
-// typedef boost::dynamic_bitset<> haploVec;
+typedef boost::dynamic_bitset<> haploVec;
 
-typedef vector<bool> haploVec;
+//typedef vector<bool> haploVec;
 
 class diploVec
 {
 	public:
-	haploVec g;
-	int operator[] (int& x) {
-		if( g[2*x] ){
-			return ( g[2*x + 1] ? 2 : 1 );
+	haploVec het;
+	haploVec hom;
+	int operator[] (const int& x) {
+		if( het[x] ){
+			return ( hom[x] ? 2 : 1 );
 		}else{
-			return ( g[2*x + 1] ? 1 : 0 );
+			return 0;
 		}
 	}
 //	diploVec() : {};
 //	diploVec(int);
 	void resize (int&);
-	void reserve (int&);
+//	void reserve (int&);
 	void assign(int, int&);
 	void push_back (int);
 	unsigned int size();
@@ -85,10 +86,15 @@ class hdata
 	public:
 	vector<vector<int>> iids;
 	vector<vector<int>> hcts;
+	vector<haploVec> dense;
 	vector<int> nhap;
 	vector<vector<int>> map;
+//	vector<vector<int>> count_matrix;
+//	int b1;
+//	int b2;
+//	void get_matrix(int bi, int bj);
 	void push_block (vector<int>&, vector<int>&, int) ;
-	void push_map (vector<int>&);
+	void push_map (vector<int>&, haploVec&);
 };
 
 struct gprob {
@@ -102,6 +108,7 @@ class gdata
 	public:
 //	vector<vector<int>> carriers;
 	vector<vector<int>> subsample;
+	vector<bool> has_ss;
 	vector<haploVec> genotypes;
 	vector<diploVec> ugenos;
 //	vector<vector<int>> hets;
@@ -112,6 +119,7 @@ class gdata
 	vector<int> dir;
 	vector<int> mac;
 	vector<int> block;
+	void getCarriers(int);
 	void push (vector<int>&, haploVec&, int, int, int);
 	void push (diploVec&,vector<int>&,vector<int>&,double&,double&,double&,int,int,int);
 };

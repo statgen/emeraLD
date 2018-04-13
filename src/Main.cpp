@@ -40,7 +40,7 @@ void print_usage() {
 }
 
 int main (int argc, char *argv[]){
-	cout.precision(5);
+	//cout.precision(5);
 	
 	cerr << "emeraLD v0.1 (c) 2018 corbin quick (corbinq@gmail.com)\n";
 	
@@ -73,6 +73,7 @@ int main (int argc, char *argv[]){
 	
 	fopts.mmac = 1000;
 	fopts.max_sample = 1000;
+	fopts.one_vs_all = 0;
 	
 	string keepfile = "";
 	string exclfile = "";
@@ -87,8 +88,7 @@ int main (int argc, char *argv[]){
 	fopts.region = "";
 	fopts.region_e = "";
 	
-	int help, matrix_out, one_vs_all;
-	help = matrix_out = one_vs_all = 0;
+	int help = 0, matrix_out = 0;
 	
 	int opt = 0;
 	
@@ -224,6 +224,7 @@ int main (int argc, char *argv[]){
 		return 1;
 	}
 	
+	setOptions(fopts);
 	idat.process(infile);
 	
 	if( fopts.region_mode ){
@@ -246,7 +247,7 @@ int main (int argc, char *argv[]){
 		fopts.region = asRegion(region_v[0], r_start, stoi(region_v[1]) + max_dist);
 	}
 	
-	if( matrix_out && one_vs_all ){
+	if( matrix_out && fopts.one_vs_all ){
 		cerr << "\n\t--matrix cannot be used with --rsid or --snp\n";
 		cerr << "\n\tuse --help to see more options\n\n";
 		//    print_usage();
@@ -311,7 +312,7 @@ int main (int argc, char *argv[]){
 	}
 	                               
 	
-	if( one_vs_all ){
+	if( fopts.one_vs_all ){
 		
 		if( target.matches < 1 ){
 			cerr << "\nERROR: SNP " << sinfo.chr[0] << ":" << target.pos << " (rsid " << target.rsid <<") not found!\n";
@@ -347,7 +348,7 @@ int main (int argc, char *argv[]){
 	
 	double r, d, dprime;
 	
-	if( one_vs_all ){
+	if( fopts.one_vs_all ){
 		
 		if( extra ){
 			fprintf (outf, "#CHR\tPOS1\tRSID1\tREF:ALT1\tPOS2\tRSID2\tREF:ALT2\t");

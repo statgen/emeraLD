@@ -12,4 +12,4 @@ void setMaxSample(int&);
 void setPhased(int&);
 void setSize(int&);
 
-void getCorr(double&, double&, double&, int&, int&, gdata&, hdata&);
+void getCorr(double&, double&, double&, int, int, gdata&, hdata&);
