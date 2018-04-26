@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <stdio.h>
+#include <random>
 #include <unordered_set>
 
 #include "tabix_util/tabix.hpp"
