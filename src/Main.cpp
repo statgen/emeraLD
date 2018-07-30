@@ -52,6 +52,7 @@ targetinfo parseEpactsVariant(std::string& variant) {
 	t.pos = stoi(m[2]);
 	t.ref = m[3];
 	t.alt = m[4];
+	t.epacts = variant;
 
 	return t;
 }
@@ -136,7 +137,6 @@ int main (int argc, char *argv[]){
 		{NULL,        0,                 NULL,  0 }
 	};
 
-	string epacts;
 	while ((opt = getopt_long(argc, argv, "hi:o:w:t:s:r:n:k:v:f:a:b:c:e:", long_options, NULL)) != -1) {
 		switch (opt) {
 			case 'i' : infile = optarg;
@@ -149,7 +149,7 @@ int main (int argc, char *argv[]){
 				break;
 			case 'e' :
 				fopts.one_vs_all = 1;
-				epacts = optarg;
+				target.epacts = optarg;
 				break;
 			case 's' : fopts.one_vs_all = 1; target.chrpos = optarg;
 				break;
@@ -208,8 +208,8 @@ int main (int argc, char *argv[]){
 		target.chr = region_v[0];
 		target.pos = stoi(region_v[1]);
 	}
-	else if (epacts != "") {
-		target = parseEpactsVariant(epacts);
+	else if (target.epacts != "") {
+		target = parseEpactsVariant(target.epacts);
 	}
 	
 	if( keepfile != "" ){
