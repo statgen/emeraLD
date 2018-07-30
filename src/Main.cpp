@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <vector>
 #include <random>
+#include <regex>
 
 using namespace std;
 
@@ -26,6 +27,7 @@ void print_usage() {
 	cerr << "\t\t--nmax : number of minor-allele carriers sampled (default: 1000)\n";
 	cerr << "\t\t--region STR : calculate LD for SNPs in region (chr:start-end) \n";
 	cerr << "\t\t--snp STR : only print pairwise LD for specified SNP (chr:pos) \n";
+	cerr << "\t\t--epacts STR : only print pairwise LD for specified SNP (chr:pos_ref/alt)\n";
 	cerr << "\t\t--rsid STR : only print pairwise LD for specified SNP \n";
 	cerr << "\t\t--window INT : only calculate LD between SNPs within specified bp window (default: 1Mbp)\n";
 	cerr << "\t\t--threshold DOUBLE : only print LD if abs(LD) > threshold (default: 1e-5)\n";
@@ -37,6 +39,21 @@ void print_usage() {
 	cerr << "\t\t--exclude STR : one-column file of individual IDs to exclude\n";
 	//  cerr << "\t\t--nmax INT : LD precision parameter (default: 5000)\n\n";
 	cerr << "\n";
+}
+
+targetinfo parseEpactsVariant(std::string& variant) {
+  static regex p("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
+  smatch m;
+  targetinfo t;
+	regex_search(variant, m, p);
+
+	t.rsid = variant;
+	t.chr = m[1];
+	t.pos = stoi(m[2]);
+	t.ref = m[3];
+	t.alt = m[4];
+
+	return t;
 }
 
 int main (int argc, char *argv[]){
@@ -107,6 +124,7 @@ int main (int argc, char *argv[]){
 		{"no-phase",  no_argument, &fopts.phased, 0},
 		{"snp",       required_argument, NULL,  's' },
 		{"rsid",      required_argument, NULL,  'd' },
+		{"epacts",      required_argument, NULL,  'e' },
 		{"nmax",      required_argument, NULL,  'n' },
 		{"include",   required_argument,  NULL,  'k' },
 		{"exclude",   required_argument,  NULL,  'v' },
@@ -118,7 +136,8 @@ int main (int argc, char *argv[]){
 		{NULL,        0,                 NULL,  0 }
 	};
 
-	while ((opt = getopt_long(argc, argv, "hi:o:w:t:s:r:n:k:v:f:a:b:c:", long_options, NULL)) != -1) {
+	string epacts;
+	while ((opt = getopt_long(argc, argv, "hi:o:w:t:s:r:n:k:v:f:a:b:c:e:", long_options, NULL)) != -1) {
 		switch (opt) {
 			case 'i' : infile = optarg;
 				break;
@@ -127,6 +146,10 @@ int main (int argc, char *argv[]){
 			case 'w' : max_dist = atoi(optarg);
 				break;
 			case 't' : min_print = atof(optarg);
+				break;
+			case 'e' :
+				fopts.one_vs_all = 1;
+				epacts = optarg;
 				break;
 			case 's' : fopts.one_vs_all = 1; target.chrpos = optarg;
 				break;
@@ -184,6 +207,9 @@ int main (int argc, char *argv[]){
 		}
 		target.chr = region_v[0];
 		target.pos = stoi(region_v[1]);
+	}
+	else if (epacts != "") {
+		target = parseEpactsVariant(epacts);
 	}
 	
 	if( keepfile != "" ){
