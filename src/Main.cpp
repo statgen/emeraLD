@@ -388,7 +388,8 @@ int main (int argc, char *argv[]){
 		}
 		
 		for (int i = 0; i < sinfo.size(); i++) {
-			if( abs(target.pos - sinfo.pos[i]) < max_dist && sinfo.pos[i] != target.pos ){
+			bool not_target = sinfo.pos[i] != target.pos && sinfo.ref[i] != target.ref && sinfo.alt[i] != target.alt;
+			if( abs(target.pos - sinfo.pos[i]) < max_dist && not_target ){
 				getCorr(r, d, dprime, i, target.index, gdat, hdat);
 				if(  abs(r) > min_print  ){
 					if( extra ){
