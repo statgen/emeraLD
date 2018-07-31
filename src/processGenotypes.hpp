@@ -77,6 +77,7 @@ class targetinfo
 	string chrpos;
 	string ref;
 	string alt;
+	string epacts;
 	int index;
 	int matches;
 targetinfo() : chr(""), pos(-1), chrpos(""), rsid(""), ref(""), alt(""), index(-1), matches(0) {}
