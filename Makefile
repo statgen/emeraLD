@@ -1,6 +1,6 @@
 VERSION=0.1
 
-CPPFLAGS= -Ofast -flto -pipe
+CPPFLAGS= -Ofast -flto -pipe -Isrc
 CXXFLAGS= -std=c++11
 
 LDFLAGS= -lz -lm
