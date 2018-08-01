@@ -80,7 +80,7 @@ class targetinfo
 	string epacts;
 	int index;
 	int matches;
-targetinfo() : chr(""), pos(-1), chrpos(""), rsid(""), ref(""), alt(""), index(-1), matches(0) {}
+targetinfo() : chr(""), pos(-1), rsid(""), chrpos(""), ref(""), alt(""), epacts(""), index(-1), matches(0) {}
 };
 
 class hdata
