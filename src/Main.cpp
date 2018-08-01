@@ -4,7 +4,6 @@
 #include <getopt.h>
 #include <vector>
 #include <random>
-#include <regex>
 
 using namespace std;
 
@@ -39,22 +38,6 @@ void print_usage() {
 	cerr << "\t\t--exclude STR : one-column file of individual IDs to exclude\n";
 	//  cerr << "\t\t--nmax INT : LD precision parameter (default: 5000)\n\n";
 	cerr << "\n";
-}
-
-targetinfo parseEpactsVariant(std::string& variant) {
-  static regex p("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
-  smatch m;
-  targetinfo t;
-	regex_search(variant, m, p);
-
-	t.rsid = variant;
-	t.chr = m[1];
-	t.pos = stoi(m[2]);
-	t.ref = m[3];
-	t.alt = m[4];
-	t.epacts = variant;
-
-	return t;
 }
 
 int main (int argc, char *argv[]){

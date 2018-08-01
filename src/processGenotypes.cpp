@@ -1,5 +1,5 @@
 #include "processGenotypes.hpp"
-
+#include <regex>
 using namespace std;
 
 foptions fopts;
@@ -387,6 +387,22 @@ string asRegion (string chr, int pos, int end){
 string asRegion (string chr, string pos, string end){
 	string out = chr + ":" + pos + "-" + end;
 	return out;
+}
+
+targetinfo parseEpactsVariant(std::string& variant) {
+	static regex p("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
+	smatch m;
+	targetinfo t;
+	regex_search(variant, m, p);
+
+	t.rsid = variant;
+	t.chr = m[1];
+	t.pos = stoi(m[2]);
+	t.ref = m[3];
+	t.alt = m[4];
+	t.epacts = variant;
+
+	return t;
 }
 
 int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, int& ph){

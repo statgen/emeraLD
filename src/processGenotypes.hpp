@@ -153,6 +153,7 @@ vector<string> getRegion (string str);
 string asRegion (int chr, int pos, int end);
 string asRegion (string chr, int pos, int end);
 string asRegion (string chr, string pos, string end);
+targetinfo parseEpactsVariant(std::string& variant);
 
 int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, int &ph);
 
