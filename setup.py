@@ -30,11 +30,15 @@ ext_modules = [
           'src/processGenotypes.cpp'
         ] + glob("src/tabix_util/*.c") + glob("src/tabix_util/*.cpp"),
         include_dirs=[
-            # Path to pybind11 headers
-            get_pybind_include(),
-            get_pybind_include(user=True),
-            "src",
-            "src/tabix_util",
+          # Path to pybind11 headers
+          get_pybind_include(),
+          get_pybind_include(user=True),
+          "src",
+          "src/tabix_util",
+          "src/emeraldpy"
+        ],
+        depends = [
+          "src/emeraldpy/core.hpp"
         ],
         language='c++'
     ),
