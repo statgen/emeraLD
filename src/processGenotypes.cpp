@@ -494,8 +494,8 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 									cerr << "\nNOTE: genotype data appear to be unphased\n";
 									cerr << "      reporting genotype LD rather than haplotype LD\n";
 									cerr << "      use \"--phased\" option to override this behaviour\n";
-									ph = 1;
-									fopts.phased = 1;
+									ph = 0;
+									fopts.phased = 0;
 									ug.resize(N_SS);
 									if(load_sparse){
 										ht.reserve(N_SS);
