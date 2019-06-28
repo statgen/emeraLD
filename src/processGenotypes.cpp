@@ -68,7 +68,23 @@ unsigned int diploVec::size(){
 }
 
 void diploVec::flip(){
+	// The "het" vector actually indicates whether
+	// an individual carries one or more copies of 
+	// the alternate allele, so 
+	
+	// het[i] = I( G[i] \in {1,2} ) 
+	// hom[i] = I( G[i] \in {2} )
+	
+	// If we flip the alleles, the new definitions are
+	
+	// het'[i] = I( G[i] \in {0,1} ) = 1 - hom[i]
+	// hom'[i] = I( G[i] \in {0} ) = 1 - het[i]
+	
+	// This is done below:
+	
+	swap(het,hom);
 	hom.flip();
+	het.flip();
 	return;
 }
 
@@ -80,6 +96,35 @@ vector<int> getSparse(haploVec v){
 		n = v.find_next(n);
 	}
 	return out;
+}
+
+
+void print_hv(haploVec& hv, int& dir )
+{
+	if ( dir > 0 ){
+		for( int i = 0; i < hv.size(); i++ ){
+			cout <<  hv[i] << "\t";
+		}
+	}else{
+		for( int i = 0; i < hv.size(); i++ ){
+			cout <<  1-hv[i] << "\t";
+		}
+	}
+	cout << "\n";
+}
+
+void print_dv(diploVec& dv, int& dir )
+{
+	if ( dir > 0 ){
+		for( int i = 0; i < dv.size(); i++ ){
+			cout <<  dv[i] << "\t";
+		}
+	}else{
+		for( int i = 0; i < dv.size(); i++ ){
+			cout <<  2-dv[i] << "\t";
+		}
+	}
+	cout << "\n";
 }
 
 void snpinfo::push(string& ch, int& po, string& rs, string& rf, string& al)
@@ -150,6 +195,17 @@ void gdata::push (vector<int>& ca, haploVec& ge, int di, int ma, int bl)
 	block.emplace_back(bl);
 }
 
+
+void gdata::print(){
+	for( int i = 0; i < dir.size(); i++ ){
+		if( fopts.phased ){
+			print_hv(genotypes[i], dir[i]);
+		}else{
+			print_dv(ugenos[i], dir[i]);
+			
+		}
+	}
+}
 
 void gdata::push (diploVec& g,vector<int>& ht,vector<int>& hm,double& p0, double& p1, double& p2, int d, int m, int bl)
 {
@@ -528,6 +584,9 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 									genov[n] = true;
 									n1++;
 									n++;
+								}else{
+									cerr << "\nERROR: emeraLD does not support missing genotypes. Please consider imputing missing genotypes (e.g., https://genome.sph.umich.edu/wiki/Minimac4)\n";
+									abort();
 								}
 							}
 						}else{
@@ -549,11 +608,15 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 								p2++;
 								n++;
 								n1 += 2;
+							}else{
+								cerr << "\nERROR: emeraLD does not support missing genotypes. Please consider imputing missing genotypes (e.g., https://genome.sph.umich.edu/wiki/Minimac4)\n";
+								abort();
 							}
 						}
 					}
 					ii++;
 				}
+				//cout << "\n";
 				if( min(n1, n0) >= fopts.min_mac && max(n1, n0) <= fopts.max_mac ){
 					sinfo.push(chr, pos, rsid, ref, alt);
 					if( fopts.phased ){

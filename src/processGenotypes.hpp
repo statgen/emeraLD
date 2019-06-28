@@ -123,6 +123,7 @@ class gdata
 	void getCarriers(int);
 	void push (vector<int>&, haploVec&, int, int, int);
 	void push (diploVec&,vector<int>&,vector<int>&,double&,double&,double&,int,int,int);
+	void print();
 };
 
 class foptions
@@ -146,6 +147,9 @@ class foptions
 };
 
 void setOptions(foptions);
+
+void print_hv(haploVec&,int&);
+void print_dv(diploVec&,int&);
 
 vector<string> getRegion (string str);
 
