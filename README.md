@@ -1,7 +1,7 @@
 ## emeraLD
 Tools for rapid on-the-fly LD calculation
 #### About
-- Exploits sparsity and haplotype structure to enable rapid LD calculation with massive data sets
+- Exploits sparsity and haplotype structure to efficiently calculate LD 
 - Uses tabix indexes to support rapid querying of genomic regions
 - Supports VCF (phased or unphased) and M3VCF formats
 - Provides easy-to-use R interface to avoid storing/precomputing LD. This can save space without compromising speed for GWAS analysis in R 
@@ -34,5 +34,8 @@ ld_data <- getLD(region = "20:83061-92955")
 head(ld_data$Sigma[, 1:10], 10)
 head(ld_data$info)
 ```
+#### Citation
+- To cite emeraLD, you can use [Quick et al. (2018) *Bioinformatics*](https://doi.org/10.1093/bioinformatics/bty547).
+
 #### Feedback and bug reports
 - Feel free to contact Corbin Quick (corbinq@gmail.com) with bug reports or feedback
