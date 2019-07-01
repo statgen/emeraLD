@@ -1,3 +1,4 @@
+#include "version.hpp"
 #include "processGenotypes.hpp"
 #include "calcLD.hpp"
 #include <stdlib.h>
@@ -42,7 +43,7 @@ void print_usage() {
 int main (int argc, char *argv[]){
 	//cout.precision(5);
 	
-	cerr << "emeraLD v0.1 (c) 2018 corbin quick (corbinq@gmail.com)\n";
+	cerr << "emeraLD v" << VERSION << " (c) 2018 corbin quick (corbinq@gmail.com)\n";
 	
 	string infile = "";
 	string outfile = "";
