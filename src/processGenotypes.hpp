@@ -77,9 +77,10 @@ class targetinfo
 	string chrpos;
 	string ref;
 	string alt;
+	string epacts;
 	int index;
 	int matches;
-targetinfo() : chr(""), pos(-1), chrpos(""), rsid(""), ref(""), alt(""), index(-1), matches(0) {}
+targetinfo() : chr(""), pos(-1), rsid(""), chrpos(""), ref(""), alt(""), epacts(""), index(-1), matches(0) {}
 };
 
 class hdata
@@ -156,6 +157,7 @@ vector<string> getRegion (string str);
 string asRegion (int chr, int pos, int end);
 string asRegion (string chr, int pos, int end);
 string asRegion (string chr, string pos, string end);
+targetinfo parseEpactsVariant(std::string& variant);
 
 int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, int &ph);
 

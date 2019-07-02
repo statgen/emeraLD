@@ -1,5 +1,5 @@
 #include "processGenotypes.hpp"
-
+#include <regex>
 using namespace std;
 
 foptions fopts;
@@ -445,6 +445,22 @@ string asRegion (string chr, string pos, string end){
 	return out;
 }
 
+targetinfo parseEpactsVariant(std::string& variant) {
+	static regex p("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
+	smatch m;
+	targetinfo t;
+	regex_search(variant, m, p);
+
+	t.rsid = variant;
+	t.chr = m[1];
+	t.pos = stoi(m[2]);
+	t.ref = m[3];
+	t.alt = m[4];
+	t.epacts = variant;
+
+	return t;
+}
+
 int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo &sinfo, idata &idat, int &n_haps, int& ph){
 	
 	Tabix tfile(vcf_path);
@@ -519,21 +535,33 @@ int read_tabixed_vcf(string &vcf_path, targetinfo &target, gdata &gdat, snpinfo 
 			if( !fopts.region_mode || (pos >= r_start && pos <= r_end && chr == r_chr) ){
 				
 				if( fopts.one_vs_all ){
-					if( rsid == target.rsid || pos == target.pos ){
-						target.matches++;
-						target.ref = ref;
-						target.alt = alt;
-						if(target.rsid == ""){
+					if (target.epacts != "") {
+						// User specified a specific chr:pos_ref/alt and we want to match only against it.
+						if (pos == target.pos && ref == target.ref && alt == target.alt) {
+							target.matches++;
+							target.index = k;
 							target.rsid = rsid;
 						}
-						if( target.pos < 0 ){
-							target.pos = pos;
+					}
+					else {
+						// We have to match against rsid or just plain position in this case.
+						if( rsid == target.rsid || pos == target.pos ){
+							target.matches++;
+							target.ref = ref;
+							target.alt = alt;
+							if(target.rsid == ""){
+								target.rsid = rsid;
+							}
+							if( target.pos < 0 ){
+								target.pos = pos;
+							}
+							target.index = k;
 						}
-						target.index = k;
-						if( target.matches > 1 ){
-							cerr << "\nERROR: found duplicate target.matches for target SNP " << chr << ":" << pos << " (rsid " << rsid <<")\n";
-							return 1;
-						}
+					}
+
+					if( target.matches > 1 ){
+						cerr << "\nERROR: found duplicate target.matches for target SNP " << chr << ":" << pos << " (rsid " << rsid <<")\n";
+						return 1;
 					}
 				}
 				

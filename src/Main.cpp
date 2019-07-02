@@ -27,6 +27,7 @@ void print_usage() {
 	cerr << "\t\t--nmax : number of minor-allele carriers sampled (default: 1000)\n";
 	cerr << "\t\t--region STR : calculate LD for SNPs in region (chr:start-end) \n";
 	cerr << "\t\t--snp STR : only print pairwise LD for specified SNP (chr:pos) \n";
+	cerr << "\t\t--epacts STR : only print pairwise LD for specified SNP (chr:pos_ref/alt)\n";
 	cerr << "\t\t--rsid STR : only print pairwise LD for specified SNP \n";
 	cerr << "\t\t--window INT : only calculate LD between SNPs within specified bp window (default: 1Mbp)\n";
 	cerr << "\t\t--threshold DOUBLE : only print LD if abs(LD) > threshold (default: 1e-5)\n";
@@ -108,6 +109,7 @@ int main (int argc, char *argv[]){
 		{"no-phase",  no_argument, &fopts.phased, 0},
 		{"snp",       required_argument, NULL,  's' },
 		{"rsid",      required_argument, NULL,  'd' },
+		{"epacts",      required_argument, NULL,  'e' },
 		{"nmax",      required_argument, NULL,  'n' },
 		{"include",   required_argument,  NULL,  'k' },
 		{"exclude",   required_argument,  NULL,  'v' },
@@ -119,7 +121,7 @@ int main (int argc, char *argv[]){
 		{NULL,        0,                 NULL,  0 }
 	};
 
-	while ((opt = getopt_long(argc, argv, "hi:o:w:t:s:r:n:k:v:f:a:b:c:", long_options, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "hi:o:w:t:s:r:n:k:v:f:a:b:c:e:", long_options, NULL)) != -1) {
 		switch (opt) {
 			case 'i' : infile = optarg;
 				break;
@@ -128,6 +130,10 @@ int main (int argc, char *argv[]){
 			case 'w' : max_dist = atoi(optarg);
 				break;
 			case 't' : min_print = atof(optarg);
+				break;
+			case 'e' :
+				fopts.one_vs_all = 1;
+				target.epacts = optarg;
 				break;
 			case 's' : fopts.one_vs_all = 1; target.chrpos = optarg;
 				break;
@@ -185,6 +191,9 @@ int main (int argc, char *argv[]){
 		}
 		target.chr = region_v[0];
 		target.pos = stoi(region_v[1]);
+	}
+	else if (target.epacts != "") {
+		target = parseEpactsVariant(target.epacts);
 	}
 	
 	if( keepfile != "" ){
@@ -366,7 +375,8 @@ int main (int argc, char *argv[]){
 		}
 		
 		for (int i = 0; i < sinfo.size(); i++) {
-			if( abs(target.pos - sinfo.pos[i]) < max_dist && sinfo.pos[i] != target.pos ){
+			bool not_target = sinfo.pos[i] != target.pos && sinfo.ref[i] != target.ref && sinfo.alt[i] != target.alt;
+			if( abs(target.pos - sinfo.pos[i]) < max_dist && not_target ){
 				getCorr(r, d, dprime, i, target.index, gdat, hdat);
 				if(  abs(r) > min_print  ){
 					if( extra ){
