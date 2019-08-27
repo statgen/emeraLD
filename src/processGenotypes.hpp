@@ -9,7 +9,7 @@
 #include <random>
 #include <unordered_set>
 
-#include "tabix_util/tabix.hpp"
+#include "tabixpp/tabix.hpp"
 #include "boost/dynamic_bitset.hpp"
 
 #ifndef PROCGENO_H

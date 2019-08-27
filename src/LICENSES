@@ -1,0 +1,16 @@
+
+Subdirectories within src/ include code and source files from several other open-source projects. I am grateful to the individuals who developed these resources and made them available to the open source software community. 
+
+Code and source files within these subdirectories are subject to the licenses issued by the original authors rather than the license for emeraLD's primary source files. These licenses are included separately within each subdirectory. 
+
+Boost library and header files
+* https://www.boost.org/
+
+Pybind
+* https://github.com/pybind/pybind11
+
+Tabix and HTSLIB (htslib/ and tabixpp/):
+* tabixpp/ source files are adapted from https://github.com/ekg/tabixpp
+* htslib/ source files are from HTSLIB: https://github.com/samtools/htslib 
+
+

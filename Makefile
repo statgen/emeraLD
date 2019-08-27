@@ -7,8 +7,8 @@ LDFLAGS= -lz -lm
 
 .PHONY: all clean
 
-cppsrc = $(wildcard src/*.cpp) src/tabix_util/tabix.cpp
-csrc = src/tabix_util/index.c src/tabix_util/bgzf.c
+cppsrc = $(wildcard src/*.cpp) src/tabixpp/tabix.cpp
+csrc = src/htslib/index.c src/htslib/bgzf.c
 
 all: version
 

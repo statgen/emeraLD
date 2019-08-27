@@ -1,8 +1,8 @@
 #include <string>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include "bgzf.h"
-#include "tabix.h"
+#include "../htslib/bgzf.h"
+#include "../htslib/tabix.h"
 #include <iostream>
 
 #ifndef TABIXPP_H
