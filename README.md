@@ -20,17 +20,17 @@ bin/emeraLD -i example/chr20.1KG.25K_m.m3vcf.gz --region 20:60479-438197 --stdou
 
 ```
 
-## Software References
+#### Software References
 Libraries and resources used or adapted in emeraLD:
 - **Data structures**
-  - [**Boost C++ libraries**](https://www.boost.org/)
+  - [Boost C++ libraries](https://www.boost.org/)
 - **Python Integration** 
   - [pybind11, pybind dev team](https://github.com/pybind/pybind11)
 - **Tabix and HTSLIB**
   - [tabixpp, ekg et al.](https://github.com/ekg/tabixpp)
   - [htslib, samtools team](https://github.com/samtools/htslib)
 
-## Contributors
+#### Contributors
 Special thanks to:
 - Daniel Taliun
 - Ryan Welch
